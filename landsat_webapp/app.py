@@ -27,7 +27,7 @@ def load_user(user_id):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(60), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
 
 
@@ -56,22 +56,23 @@ def logout():
 
 @app.post("/register")
 def register_post():
-    username = request.form.get("username")
+    email = request.form.get("email")
     password = request.form.get("password")
+
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    user = User(username=username, password=hashed)
+    user = User(email=email, password=hashed)
     db.session.add(user)
     db.session.commit()
-    flash(f"Created account for {username}. You may now log in.", "success")
+    flash(f"Created account for {email}. You may now log in.", "success")
     return redirect("/login")
 
 
 @app.post("/login")
 def login_post():
-    username = request.form.get("username")
+    email = request.form.get("email")
     password = request.form.get("password")
     remember_me = request.form.get("rememberme")
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(email=email).first()
     if user and bcrypt.checkpw(password.encode("utf-8"), user.password):
         login_user(user, remember=remember_me)
         # flash('Successfully logged in!', 'success')
