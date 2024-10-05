@@ -1,13 +1,22 @@
-[project]
-name = "nasa-landsat"
+[tool.poetry]
+name = "landsat-webapp"
 version = "0.1.0"
-description = "Add your description here"
+description = ""
+authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "bcrypt>=4.2.0",
-    "flask-login>=0.6.3",
-    "flask-sqlalchemy>=3.1.1",
-    "flask>=3.0.3",
-    "python-dotenv>=1.0.1",
-]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.0.3"
+bcrypt = "^4.2.0"
+flask-login = "^0.6.3"
+python-dotenv = "^1.0.1"
+flask-sqlalchemy = "^3.1.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
