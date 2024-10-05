@@ -21,10 +21,10 @@ body = input("Enter a body >").strip()
 
 # Create the email message
 msg = MIMEMultipart()
-msg['From'] = sender_email
-msg['To'] = recipient_email
-msg['Subject'] = subject
-msg.attach(MIMEText(body, 'plain'))
+msg["From"] = sender_email
+msg["To"] = recipient_email
+msg["Subject"] = subject
+msg.attach(MIMEText(body, "plain"))
 
 # Connect to the Mailjet SMTP server and send the email
 try:
