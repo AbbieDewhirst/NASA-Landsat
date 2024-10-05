@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<br><br>
+<form method='POST' class="container">
+    <fieldset class="form-group">
+        <legend class="border-bottom mb-4">Login</legend>
+        <div class="form-group mb-4">
+            <label for="username" class="form-control-label">Username:</label>
+            <input type="text" name="username" class="form-control form-control-lg" />
+        </div>
+        <div class="form-group mb-4">
+            <label for="password" class="form-control-label">Password:</label>
+            <input type="password" name="password" class="form-control form-control-lg" />
+        </div>
+    </fieldset>
+    <div class="form-check">
+        <input type="checkbox" name="rememberme" id="rememberme" class="form-check-input">
+        <label for="rememberme" class="form-check-label">Remember Me</label>
+    </div><br>
+    <div class="form-group">
+        <input type="submit" value="Login" class="btn btn-primary btn-lg">
+    </div>
+</form>
+{% endblock %}
