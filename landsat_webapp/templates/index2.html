@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Landsat Reflectance Data</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Controls Container on the left -->
+    <div id="controls-container">
+        <div id="marker-form">
+            <h3>Add a Marker</h3>
+            <label for="lng">Longitude:</label>
+            <input type="text" id="lng" placeholder="Enter longitude">
+            <label for="lat">Latitude:</label>
+            <input type="text" id="lat" placeholder="Enter latitude">
+            <button onclick="addMarkerFromInput()">Add Marker</button>
+        </div>
+
+        <!-- Export Box inside the controls container -->
+        <div id="export-container">
+            <h3>Export Data</h3>
+            <button onclick="exportToCSV()">Export to CSV</button>
+        </div>
+    </div>
+
+    <!-- Slider Container on the top-right -->
+    <div id="slider-container">
+        <h3>Cloud Coverage</h3>
+        <input type="range" id="slider" min="0" max="100" value="50">
+        <span id="slider-value">50%</span>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYWRld2hpcnN0IiwiYSI6ImNseHZ4MXk0dDF6ZXYyanB0NGtob2Z3OXYifQ.dPt4lCIz5PLJU_sA22tvGQ';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-74.5, 40],
+            zoom: 9
+        });
+
+        let currentMarker;
+        let markersData = []; // Array to store marker data
+
+        // Function to add a marker with a popup at the specified coordinates
+        function addMarker(lng, lat) {
+            // Remove the existing marker, if any
+            if (currentMarker) {
+                currentMarker.remove();
+            }
+
+            // Create a new marker with a popup
+            currentMarker = new mapboxgl.Marker()
+                .setLngLat([lng, lat])
+                .setPopup(new mapboxgl.Popup().setHTML(`<h3>Coordinates</h3><p>Longitude: ${lng}<br>Latitude: ${lat}</p>`))
+                .addTo(map);
+
+            // Open the popup
+            currentMarker.getPopup().addTo(map);
+
+            // Store marker data
+            markersData.push({ longitude: lng, latitude: lat });
+        }
+
+        // Function to add a marker based on user input
+        function addMarkerFromInput() {
+            const lng = parseFloat(document.getElementById('lng').value);
+            const lat = parseFloat(document.getElementById('lat').value);
+            
+            if (!isNaN(lng) && !isNaN(lat)) {
+                addMarker(lng, lat);
+                map.flyTo({ center: [lng, lat], zoom: 12 });
+            } else {
+                alert('Please enter valid coordinates.');
+            }
+        }
+
+        // Add a marker when the user clicks on the map
+        map.on('click', (event) => {
+            const coordinates = event.lngLat;
+            addMarker(coordinates.lng, coordinates.lat);
+
+            // Update input fields with the clicked coordinates
+            document.getElementById('lng').value = coordinates.lng;
+            document.getElementById('lat').value = coordinates.lat;
+        });
+
+        // Slider functionality
+        const slider = document.getElementById('slider');
+        const sliderValue = document.getElementById('slider-value');
+
+        slider.addEventListener('input', (event) => {
+            sliderValue.textContent = `${event.target.value}%`;
+        });
+
+        // Function to export data to CSV
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Longitude,Latitude\n";
+
+            // Append each marker's data to the CSV content
+            markersData.forEach((marker) => {
+                csvContent += `${marker.longitude},${marker.latitude}\n`;
+            });
+
+            // Create a download link and trigger the download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "markers_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
