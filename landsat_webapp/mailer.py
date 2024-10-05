@@ -1,39 +1,35 @@
 import smtplib
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+subject = "Email Subject"
+body = "This is the body of the text message"
+sender = "reesaholics@gmail.com"
+recipients = ["mat_p1999@hotmail.com"]
+password = "oevh jnbv zlkh wcfo"
 
-# Mailjet SMTP server configuration
-SMTP_SERVER = os.environ.get("SMTP_SERVER")
-SMTP_PORT = os.environ.get("SMTP_PORT")
-SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
 
-# Email details
-sender_email = SENDER_EMAIL
-recipient_email = input("Enter an email address >").strip()
-subject = input("Enter a subject >").strip()
-body = input("Enter a body >").strip()
+def send_email(subject, body, sender, recipients, password):
+    try:
+        print("Creating MIMEText object...")
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = sender
+        msg["To"] = ", ".join(recipients)
+        print("MIMEText object created successfully.")
 
-# Create the email message
-msg = MIMEMultipart()
-msg["From"] = sender_email
-msg["To"] = recipient_email
-msg["Subject"] = subject
-msg.attach(MIMEText(body, "plain"))
+        print("Connecting to SMTP server...")
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
+            smtp_server.set_debuglevel(1)  # Enable debug output
+            print("Logging in...")
+            smtp_server.login(sender, password)
+            print("Logged in successfully.")
 
-# Connect to the Mailjet SMTP server and send the email
-try:
-    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-    server.starttls()  # Secure the connection
-    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-    server.sendmail(sender_email, recipient_email, msg.as_string())
-    print("Email sent successfully")
-except Exception as e:
-    print(f"Failed to send email: {e}")
-finally:
-    server.quit()
+            print("Sending email...")
+            smtp_server.sendmail(sender, recipients, msg.as_string())
+            print("Email sent successfully!")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+send_email(subject, body, sender, recipients, password)
