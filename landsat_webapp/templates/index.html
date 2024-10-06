@@ -104,4 +104,27 @@
     });
 </script>
 
+<script>
+    // Get references to the navbar collapse element and drawer toggle button
+    const navbarCollapse = document.getElementById('navbarSupportedContent');
+    const drawerToggleButton = document.getElementById('drawer-toggle');
+
+    // Function to toggle the visibility of the drawer toggle button
+    function toggleDrawerButton() {
+        if (navbarCollapse.classList.contains('show')) {
+            drawerToggleButton.style.display = 'none';
+        } else {
+            drawerToggleButton.style.display = 'block';
+        }
+    }
+
+    // Listen for the 'shown' and 'hidden' events on the navbar collapse
+    navbarCollapse.addEventListener('shown.bs.collapse', toggleDrawerButton);
+    navbarCollapse.addEventListener('hidden.bs.collapse', toggleDrawerButton);
+
+    // Initial check
+    document.addEventListener('DOMContentLoaded', toggleDrawerButton);
+</script>
+
+
 {% endblock %}
