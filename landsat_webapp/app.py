@@ -5,16 +5,16 @@ import secrets
 import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, flash, jsonify, redirect, render_template, request
-from flask_apscheduler import APScheduler
-from flask_login import (
-    LoginManager,
-    UserMixin,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    UserMixin,
+    LoginManager,
+    current_user,
+    logout_user,
+    login_user,
+    login_required,
+)
+from flask_apscheduler import APScheduler
 from skyfield.api import load
 
 from landsat_parser.main import (
