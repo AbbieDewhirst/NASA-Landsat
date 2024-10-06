@@ -19,3 +19,12 @@ wget "https://owncloud.jagrajaulakh.com/s/g9HfAdH1FIwuxTj/download" -O "LC08_L1G
 tar -xvf LC08_L1GT_114213_20241002_20241002_02_RT.tar 
 ```
 
+
+- Landsatxplore: Given lat/lon, we're getting:
+    - acquisition_date
+    - cloud coverage
+    - display_id
+    - landsat_product_id
+    - wrs_path, wrs_row
+    - spatial_coverage (bounding box)
+    - AND NOW L1 DATA!!
