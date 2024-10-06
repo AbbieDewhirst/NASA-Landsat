@@ -1,0 +1,30 @@
+<!-- info_drawer.html -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="infoDrawer" aria-labelledby="infoDrawerLabel">
+    <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="infoDrawerLabel">Info</h3>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="infoDrawerContent">
+        <!-- Content will be dynamically inserted here -->
+    </div>
+</div>
+
+
+<script>
+    function openInfoDrawer(data) {
+        // Prepare the content for the drawer
+        const drawerContent = `
+            <h5>Coordinates:</h5>
+            <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
+            <h5>LANDSAT Predictions:</h5>
+            <p>LANDSAT 8: ${data.landsat8Time}<br>LANDSAT 9: ${data.landsat9Time}</p>
+        `;
+
+        // Set the content of the drawer
+        document.getElementById('infoDrawerContent').innerHTML = drawerContent;
+
+        // Show the drawer
+        const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
+        infoDrawer.show();
+    }
+</script>

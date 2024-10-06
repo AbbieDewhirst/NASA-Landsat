@@ -4,6 +4,7 @@
 
 <!-- Include the drawer template -->
 {% include "drawer.html" %}
+{% include "info_drawer.html" %}
 
 <!-- Drawer toggle button -->
 <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDrawer"
@@ -31,29 +32,92 @@
     let currentMarker;
     let markersData = []; // Array to store marker data
 
-    // Function to add a marker with a styled popup at the specified coordinates
     function addMarker(lng, lat) {
         // Remove the existing marker, if any
         if (currentMarker) {
             currentMarker.remove();
         }
 
-        // Create a new marker with a styled popup
+        // Create a new marker
         currentMarker = new mapboxgl.Marker({ color: 'black' })
             .setLngLat([lng, lat])
-            .setPopup(
-                new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
-                    .setHTML(
-                        `<h3>Coordinates</h3><p>Longitude: ${lng}<br>Latitude: ${lat}</p>`
-                    )
-            )
             .addTo(map);
-
-        // Open the popup
-        currentMarker.getPopup().addTo(map);
 
         // Store marker data
         markersData.push({ longitude: lng, latitude: lat });
+
+        // Call the predict endpoint
+        fetch(`/predict?lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                // Function to format the UTC date string to local time
+                const formatDateTime = (utcString) => {
+                    const date = new Date(utcString);
+                    const options = {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false,
+                        timeZoneName: 'short'
+                    };
+                    const localeString = date.toLocaleString(undefined, options);
+                    const [datePart, timePartWithZone] = localeString.split(', ');
+                    const [timePart, timeZone] = timePartWithZone.split(' ');
+                    const [month, day, year] = datePart.split('/');
+                    const formattedDate = `${month}-${day}-${year}`;
+                    return `${formattedDate} @ ${timePart} ${timeZone}`;
+                };
+
+                // Format the prediction times
+                const landsat8Time = formatDateTime(data["LANDSAT 8"]);
+                const landsat9Time = formatDateTime(data["LANDSAT 9"]);
+
+                // Prepare the popup content with centered "Coordinates" and "More Info" button
+                const popupContent = `
+                    <div class="text-center">
+                        <h6 class="mb-2">Coordinates</h6>
+                        <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                        <button id="more-info-btn" class="btn btn-link">More Info Here</button>
+                    </div>
+                `;
+
+                // Set the popup with the prediction data
+                const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
+                    .setHTML(popupContent);
+
+                // Attach the popup to the marker
+                currentMarker.setPopup(popup);
+
+                // Open the popup
+                popup.addTo(map);
+
+                // Attach the event listener after the popup is added to the map
+                const popupElement = popup.getElement();
+                popupElement.addEventListener('click', (event) => {
+                    if (event.target && event.target.id === 'more-info-btn') {
+                        // Open the right-side drawer and display data
+                        openInfoDrawer({ lng, lat, landsat8Time, landsat9Time });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching prediction data:', error);
+                // Fallback content if there's an error
+                const popupContent = `
+                    <div class="text-center">
+                        <h6 class="mb-2">Coordinates</h6>
+                        <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                        <p>Error fetching prediction data.</p>
+                    </div>
+                `;
+                const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
+                    .setHTML(popupContent);
+                currentMarker.setPopup(popup);
+                popup.addTo(map);
+            });
     }
 
     // Add marker from input
@@ -102,9 +166,6 @@
     offcanvasDrawer.addEventListener('hidden.bs.offcanvas', () => {
         map.resize();
     });
-</script>
-
-<script>
     // Get references to the navbar collapse element and drawer toggle button
     const navbarCollapse = document.getElementById('navbarSupportedContent');
     const drawerToggleButton = document.getElementById('drawer-toggle');
