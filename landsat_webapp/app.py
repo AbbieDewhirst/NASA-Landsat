@@ -154,7 +154,7 @@ def schedule():
             return jsonify({"error": "Invalid datetime format"}), 400
 
         run_time_dt = datetime.fromisoformat(run_time)
-        job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}"
+        job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}_{secrets.token_hex()}"
 
         scheduler.add_job(
             func=scheduled_task,
@@ -164,7 +164,7 @@ def schedule():
             id=job_id
         )
 
-        return jsonify({"message": f"Job scheduled to run at {run_time_dt} with id {job_id}"}), 200
+        return jsonify({"message": f"You will be notified at {run_time_dt}"}), 200
 
     except Exception as e:
         app.logger.error(f"Error scheduling job: {str(e)}")
