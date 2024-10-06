@@ -17,16 +17,32 @@
             lat: data.lat
         };
 
-        // Prepare the content for the drawer, including date picker
+        // Prepare the content for the drawer, divided into three sections
         const drawerContent = `
-            <h5>Coordinates:</h5>
-            <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
-            <div class="mb-3">
-                <label for="date-input" class="form-label">Select Date:</label>
-                <input type="date" id="date-input" class="form-control" min="${getCurrentDateString()}" max="${getOneMonthLaterDateString()}">
+            <!-- Section 1: General Info -->
+            <div class="drawer-section" id="general-info-section">
+                <h5>General Info</h5>
+                <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
             </div>
-            <button id="fetch-predictions-btn" class="btn btn-primary mb-2">Fetch Predictions</button>
-            <div id="predictions-content"></div>
+
+            <hr>
+            <!-- Section 2: Passover Predictions -->
+            <div class="drawer-section" id="predictions-section">
+                <h5>Passover Predictions of Landsat</h5>
+                <div class="mb-3">
+                    <label for="date-input" class="form-label">Select Date:</label>
+                    <input type="date" id="date-input" class="form-control" min="${getCurrentDateString()}" max="${getOneMonthLaterDateString()}">
+                </div>
+                <button id="fetch-predictions-btn" class="btn btn-primary mb-3">Fetch Predictions</button>
+                <div id="predictions-content"></div>
+            </div>
+
+            <!-- Section 3: Placeholder -->
+            <hr>
+            <div class="drawer-section" id="placeholder-section">
+                <h5>Additional Information</h5>
+                <p>Content coming soon...</p>
+            </div>
         `;
 
         // Set the content of the drawer
@@ -50,7 +66,7 @@
 
     function getOneMonthLaterDateString() {
         const today = new Date();
-        today.setMonth(today.getMonth() + 1);
+        today.setMonth(today.getMonth() + 50);
         return today.toISOString().split('T')[0];
     }
 
@@ -85,7 +101,7 @@
         const timeDiff = selectedDate - today;
         const daysAhead = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
 
-        if (daysAhead < 0 || daysAhead > 31) {
+        if (daysAhead < 0 || daysAhead > 5000) {
             alert('Please select a date within the next month.');
             return;
         }
@@ -123,7 +139,7 @@
 
         // Assuming predictionData is an object like { 'LANDSAT 8': [...], 'LANDSAT 9': [...] }
 
-        let content = '<h5>Predictions:</h5>';
+        let content = '';
         for (const satellite in predictionData) {
             const times = predictionData[satellite];
             content += `<h6>${satellite}:</h6><ul>`;
