@@ -11,6 +11,8 @@ from skyfield.api import load
 
 from landsat_parser.main import predict_passover
 
+from landsat_parser.main import get_last_scene_metadata
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -105,6 +107,14 @@ def predict_passover_endpoint():
 
     # Return the first occurrence of passovers for both satellites
     return jsonify(prediction_results)
+
+@app.get("/metadata")
+def get_metadata():
+    lat = float(request.args.get('lat', 0))
+    lon = float(request.args.get('lon', 0))
+
+    results = get_last_scene_metadata(lat, lon)
+    return jsonify(results)
 
 
 if __name__ == "__main__":
