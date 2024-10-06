@@ -153,6 +153,8 @@ def schedule():
         if not run_time:
             return jsonify({"error": "Invalid datetime format"}), 400
 
+        send_email('Landsat Subscription Notification', f"Thank you for using the Satelleyes Landsat system!\n\nYou'll be notified at {run_time} when the satellite is near the selected location.", [current_user.email])
+
         run_time_dt = datetime.fromisoformat(run_time)
         job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}_{secrets.token_hex()}"
 
