@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 _SENDER = "reesaholics@gmail.com"
 _PASSWORD = "oevh jnbv zlkh wcfo"
 
+
 def send_email(subject, body, recipients, debuglevel=0):
     try:
         print("Creating MIMEText object...")
@@ -29,7 +30,7 @@ def send_email(subject, body, recipients, debuglevel=0):
         print(f"An error occurred: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     subject = "Email Subject"
     body = "This is the body of the text message"
     recipients = ["jeremiedevelops@gmail.com"]

@@ -1,30 +1,39 @@
-from datetime import timedelta
 import os
 import secrets
-import bcrypt
+from datetime import datetime, timedelta
 
-from flask import Flask, render_template, request, redirect, flash, jsonify
+import bcrypt
 from dotenv import load_dotenv
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager, current_user, logout_user, login_user, login_required
+from flask import Flask, flash, jsonify, redirect, render_template, request
 from flask_apscheduler import APScheduler
-import bcrypt
-from skyfield.api import load
-from skyfield.sgp4lib import EarthSatellite
-from skyfield.toposlib import Topos
-from datetime import datetime
-from landsat_webapp.mailer import send_email
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from flask_sqlalchemy import SQLAlchemy
 from skyfield.api import load
 
-from landsat_parser.main import predict_passover
-from landsat_parser.main import get_last_scene_metadata
+from landsat_parser.main import (
+    get_last_scene_metadata,
+    predict_passover,
+    get_is_cached_download,
+    start_download,
+    is_downloading,
+)
+from landsat_webapp.mailer import send_email
+
+from http import HTTPStatus
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", secrets.token_hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
-app.config['SCHEDULER_API_ENABLED'] = True
+app.config["SCHEDULER_API_ENABLED"] = True
 
 scheduler = APScheduler()
 scheduler.init_app(app)
@@ -118,13 +127,15 @@ def predict_passover_endpoint():
     # Return the first occurrence of passovers for both satellites
     return jsonify(prediction_results)
 
+
 @app.get("/metadata")
 def get_metadata():
-    lat = float(request.args.get('lat', 0))
-    lon = float(request.args.get('lon', 0))
+    lat = float(request.args.get("lat", 0))
+    lon = float(request.args.get("lon", 0))
 
     results = get_last_scene_metadata(lat, lon)
     return jsonify(results)
+
 
 # Function to be scheduled
 def scheduled_task(message, email):
@@ -132,34 +143,74 @@ def scheduled_task(message, email):
     send_email("New Landsat Notification", message, [email])
     app.logger.debug(f"Scheduled Task executed: {message}")
 
+
 # Endpoint to schedule a new job
-@app.post('/schedule')
+@app.post("/schedule")
 @login_required
 def schedule():
     try:
         data = request.json
-        run_time = data.get('run_time')  # expecting 'run_time' in ISO format string
-        message = data.get('message', 'No message provided')
+        run_time = data.get("run_time")  # expecting 'run_time' in ISO format string
+        message = data.get("message", "No message provided")
 
         if not run_time:
-            return jsonify({"error": "Invalid datetime format"}), 400
+            return jsonify({"error": "Invalid datetime format"}), HTTPStatus.BAD_REQUEST
 
         run_time_dt = datetime.fromisoformat(run_time)
         job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}"
 
         scheduler.add_job(
             func=scheduled_task,
-            trigger='date',
+            trigger="date",
             run_date=run_time_dt,
             args=[message, current_user.email],
-            id=job_id
+            id=job_id,
         )
 
-        return jsonify({"message": f"Job scheduled to run at {run_time_dt} with id {job_id}"}), 200
+        return jsonify(
+            {"message": f"Job scheduled to run at {run_time_dt} with id {job_id}"}
+        ), HTTPStatus.OK
 
     except Exception as e:
         app.logger.error(f"Error scheduling job: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+# Endpoint to schedule a new job
+@app.get("/download")
+# @login_required
+def download():
+    display_id = request.form.get("display_id")
+    if display_id:
+        is_cached = get_is_cached_download(display_id)
+        return jsonify({"exists": is_cached}), HTTPStatus.OK
+
+    return jsonify({"error": "No display_id provided"}), HTTPStatus.BAD_REQUEST
+
+
+@app.post("/download")
+# @login_required
+def initialize_download():
+    display_id = request.form.get("display_id")
+    if display_id:
+        success = start_download(display_id)
+        return jsonify(
+            {"success": success}
+        ), HTTPStatus.OK if success else HTTPStatus.INTERNAL_SERVER_ERROR
+
+    return jsonify({"error": "No display_id provided"}), HTTPStatus.BAD_REQUEST
+
+
+@app.get("/poll-download")
+# @login_required
+def poll_download():
+    display_id = request.args.get("display_id", "")
+    if display_id:
+        is_download = is_downloading(display_id)
+        return jsonify({"is_downloading": is_download}), HTTPStatus.OK
+
+    return jsonify({"error": "No display_id provided"}), HTTPStatus.BAD_REQUEST
+
 
 if __name__ == "__main__":
     # init db if not exists
@@ -168,4 +219,4 @@ if __name__ == "__main__":
             db.create_all()
         if not scheduler.running:
             scheduler.start()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host="0.0.0.0")
