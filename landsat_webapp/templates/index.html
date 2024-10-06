@@ -4,6 +4,7 @@
 
 <!-- Include the drawer template -->
 {% include "drawer.html" %}
+{% include "info_drawer.html" %}
 
 <!-- Drawer toggle button -->
 <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDrawer"
@@ -31,7 +32,6 @@
     let currentMarker;
     let markersData = []; // Array to store marker data
 
-    // Function to add a marker with a styled popup at the specified coordinates
     function addMarker(lng, lat) {
         // Remove the existing marker, if any
         if (currentMarker) {
@@ -61,22 +61,25 @@
                         minute: '2-digit',
                         second: '2-digit',
                         hour12: false,
-                        timeZoneName: 'short' // Includes the timezone abbreviation
+                        timeZoneName: 'short'
                     };
-                    return date.toLocaleString(undefined, options);
+                    const localeString = date.toLocaleString(undefined, options);
+                    const [datePart, timePartWithZone] = localeString.split(', ');
+                    const [timePart, timeZone] = timePartWithZone.split(' ');
+                    const [month, day, year] = datePart.split('/');
+                    const formattedDate = `${month}-${day}-${year}`;
+                    return `${formattedDate} @ ${timePart} ${timeZone}`;
                 };
 
                 // Format the prediction times
                 const landsat8Time = formatDateTime(data["LANDSAT 8"]);
                 const landsat9Time = formatDateTime(data["LANDSAT 9"]);
 
-                // Prepare the popup content
+                // Prepare the popup content with a "More Info" button
                 const popupContent = `
                     <h6 class="mb-0">Coordinates:</h6>
                     <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <h6 class="mb-0 pt-2">Predictions:</h6>
-                    <p>LANDSAT 8: ${landsat8Time}</p>
-                    <p>LANDSAT 9: ${landsat9Time}</p>
+                    <button id="more-info-btn" class="btn btn-link p-0">Predictions</button>
                 `;
 
                 // Set the popup with the prediction data
@@ -88,6 +91,15 @@
 
                 // Open the popup
                 popup.addTo(map);
+
+                // Attach the event listener after the popup is added to the map
+                const popupElement = popup.getElement();
+                popupElement.addEventListener('click', (event) => {
+                    if (event.target && event.target.id === 'more-info-btn') {
+                        // Open the right-side drawer and display data
+                        openInfoDrawer({ lng, lat, landsat8Time, landsat9Time });
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error fetching prediction data:', error);
@@ -95,13 +107,10 @@
                 const popupContent = `
                     <h6 class="mb-0">Coordinates:</h6>
                     <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <h6 class="mb-0 pt-2">Predictions:</h6>
                     <p>Error fetching prediction data.</p>
                 `;
-
                 const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
                     .setHTML(popupContent);
-
                 currentMarker.setPopup(popup);
                 popup.addTo(map);
             });
@@ -153,9 +162,25 @@
     offcanvasDrawer.addEventListener('hidden.bs.offcanvas', () => {
         map.resize();
     });
-</script>
 
-<script>
+    function openInfoDrawer(data) {
+        // Prepare the content for the drawer
+        const drawerContent = `
+            <h6>Coordinates:</h6>
+            <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
+            <h6>Predictions:</h6>
+            <p>LANDSAT 8: ${data.landsat8Time}</p>
+            <p>LANDSAT 9: ${data.landsat9Time}</p>
+        `;
+
+        // Set the content of the drawer
+        document.getElementById('infoDrawerContent').innerHTML = drawerContent;
+
+        // Show the drawer
+        const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
+        infoDrawer.show();
+    }
+
     // Get references to the navbar collapse element and drawer toggle button
     const navbarCollapse = document.getElementById('navbarSupportedContent');
     const drawerToggleButton = document.getElementById('drawer-toggle');
