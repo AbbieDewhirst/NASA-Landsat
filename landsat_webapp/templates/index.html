@@ -32,6 +32,9 @@
     let markersData = []; // Array to store marker data
 
     function addMarker(lng, lat) {
+        // Remove the old bounding box before fetching new data
+        removeBoundingBox();
+
         // Remove the existing marker, if any
         if (currentMarker) {
             currentMarker.remove();
@@ -41,7 +44,6 @@
         currentMarker = new mapboxgl.Marker({ color: 'black' })
             .setLngLat([lng, lat])
             .addTo(map);
-
         // Store marker data
         markersData.push({ longitude: lng, latitude: lat });
 
@@ -65,6 +67,8 @@
         // Open the popup
         popup.addTo(map);
 
+        updateGeneralInfo(lng, lat);
+        
         // Attach the event listener after the popup is added to the map
         const popupElement = popup.getElement();
         popupElement.addEventListener('click', (event) => {
