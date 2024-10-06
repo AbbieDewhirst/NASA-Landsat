@@ -72,9 +72,9 @@
 
                 // Prepare the popup content
                 const popupContent = `
-                    <h6>Coordinates:</h6>
+                    <h6 class="mb-0">Coordinates:</h6>
                     <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <h6>Predictions:</h6>
+                    <h6 class="mb-0 pt-2">Predictions:</h6>
                     <p>LANDSAT 8: ${landsat8Time}</p>
                     <p>LANDSAT 9: ${landsat9Time}</p>
                 `;
@@ -93,9 +93,9 @@
                 console.error('Error fetching prediction data:', error);
                 // Fallback content if there's an error
                 const popupContent = `
-                    <h6>Coordinates:</h6>
+                    <h6 class="mb-0">Coordinates:</h6>
                     <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <h6>Predictions:</h6>
+                    <h6 class="mb-0 pt-2">Predictions:</h6>
                     <p>Error fetching prediction data.</p>
                 `;
 
