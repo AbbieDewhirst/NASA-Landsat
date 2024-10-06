@@ -38,22 +38,73 @@
             currentMarker.remove();
         }
 
-        // Create a new marker with a styled popup
+        // Create a new marker
         currentMarker = new mapboxgl.Marker({ color: 'black' })
             .setLngLat([lng, lat])
-            .setPopup(
-                new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
-                    .setHTML(
-                        `<h3>Coordinates</h3><p>Longitude: ${lng}<br>Latitude: ${lat}</p>`
-                    )
-            )
             .addTo(map);
-
-        // Open the popup
-        currentMarker.getPopup().addTo(map);
 
         // Store marker data
         markersData.push({ longitude: lng, latitude: lat });
+
+        // Call the predict endpoint
+        fetch(`/predict?lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                // Function to format the UTC date string to local time
+                const formatDateTime = (utcString) => {
+                    const date = new Date(utcString);
+                    const options = {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false,
+                        timeZoneName: 'short' // Includes the timezone abbreviation
+                    };
+                    return date.toLocaleString(undefined, options);
+                };
+
+                // Format the prediction times
+                const landsat8Time = formatDateTime(data["LANDSAT 8"]);
+                const landsat9Time = formatDateTime(data["LANDSAT 9"]);
+
+                // Prepare the popup content
+                const popupContent = `
+                    <h6>Coordinates:</h6>
+                    <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                    <h6>Predictions:</h6>
+                    <p>LANDSAT 8: ${landsat8Time}</p>
+                    <p>LANDSAT 9: ${landsat9Time}</p>
+                `;
+
+                // Set the popup with the prediction data
+                const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
+                    .setHTML(popupContent);
+
+                // Attach the popup to the marker
+                currentMarker.setPopup(popup);
+
+                // Open the popup
+                popup.addTo(map);
+            })
+            .catch(error => {
+                console.error('Error fetching prediction data:', error);
+                // Fallback content if there's an error
+                const popupContent = `
+                    <h6>Coordinates:</h6>
+                    <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                    <h6>Predictions:</h6>
+                    <p>Error fetching prediction data.</p>
+                `;
+
+                const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
+                    .setHTML(popupContent);
+
+                currentMarker.setPopup(popup);
+                popup.addTo(map);
+            });
     }
 
     // Add marker from input
