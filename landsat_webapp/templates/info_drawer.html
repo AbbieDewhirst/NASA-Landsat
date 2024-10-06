@@ -5,75 +5,34 @@
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body" id="infoDrawerContent">
-        <!-- Content will be dynamically inserted here -->
+        <!-- Include other sections -->
+        {% include "drawer/general_info.html" %}
+        {% include "drawer/passover_predictions.html" %}
+        {% include "drawer/cloud_coverage.html" %}
     </div>
 </div>
 
 <script>
     function openInfoDrawer(data) {
-        // Store data globally for access in the drawer
-        window.drawerData = {
-            lng: data.lng,
-            lat: data.lat
-        };
+        window.drawerData = { lng: data.lng, lat: data.lat };
 
-        // Prepare the content for the drawer, divided into three sections
-        const drawerContent = `
-            <!-- Section 1: General Info -->
-            <div class="drawer-section" id="general-info-section">
-                <h5>General Info</h5>
-                <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
-            </div>
-
-            <hr>
-            <!-- Section 2: Passover Predictions -->
-            <div class="drawer-section" id="predictions-section">
-                <h5>Passover Predictions of Landsat</h5>
-                <div class="mb-3">
-                    <label for="date-input" class="form-label">Select Date:</label>
-                    <input type="date" id="date-input" class="form-control" min="${getCurrentDateString()}" max="${getOneMonthLaterDateString()}">
-                </div>
-                <button id="fetch-predictions-btn" class="btn btn-primary mb-3">Fetch Predictions</button>
-                <div id="predictions-content"></div>
-            </div>
-
-            <!-- Section 3: Placeholder -->
-            <hr>
-            <div class="drawer-section" id="placeholder-section">
-                <h5>Additional Information</h5>
-                <p>Content coming soon...</p>
-            </div>
-        `;
-
-        // Set the content of the drawer
-        document.getElementById('infoDrawerContent').innerHTML = drawerContent;
+        // Update the content of each section
+        updateGeneralInfo(data.lng, data.lat);
 
         // Show the drawer
         const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
         infoDrawer.show();
 
-        // Attach event listener to the "Fetch Predictions" button
-        const fetchButton = document.getElementById('fetch-predictions-btn');
-        fetchButton.addEventListener('click', () => {
-            fetchPredictions();
-        });
+        // Attach event listeners to sections
+        attachEventListeners();
     }
 
-    function getCurrentDateString() {
-        const today = new Date();
-        return today.toISOString().split('T')[0]; // yyyy-mm-dd
+    function attachEventListeners() {
+        // Attach listeners for each section
+        attachCloudCoverageListeners();
     }
 
-    function getOneMonthLaterDateString() {
-        const today = new Date();
-        today.setMonth(today.getMonth() + 1);
-        return today.toISOString().split('T')[0];
-    }
-
-    let fetchingInterval;
-
-    function startFetchingAnimation() {
-        const predictionsContent = document.getElementById('predictions-content');
+    function startFetchingAnimation(contentElement) {
         let dots = '';
         fetchingInterval = setInterval(() => {
             if (dots.length < 3) {
@@ -81,76 +40,12 @@
             } else {
                 dots = '';
             }
-            predictionsContent.innerHTML = `<p>Fetching${dots}</p>`;
-        }, 500); // Update every 500 milliseconds
+            contentElement.innerHTML = `<p>Fetching${dots}</p>`;
+        }, 500);
     }
 
     function stopFetchingAnimation() {
         clearInterval(fetchingInterval);
-    }
-
-    function fetchPredictions() {
-        const dateInput = document.getElementById('date-input').value;
-        if (!dateInput) {
-            alert('Please select a date.');
-            return;
-        }
-
-        const selectedDate = new Date(dateInput);
-        const today = new Date();
-        const timeDiff = selectedDate - today;
-        const daysAhead = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
-
-        if (daysAhead < 0 || daysAhead > 32) {
-            alert('Please select a date within the next month.');
-            return;
-        }
-
-        const { lng, lat } = window.drawerData;
-
-        // Start the fetching animation
-        startFetchingAnimation();
-
-        // Call the predict endpoint
-        fetch(`/predict?lat=${lat}&lon=${lng}&days=${daysAhead}`)
-            .then(response => response.json())
-            .then(predictionData => {
-                // Stop the fetching animation
-                stopFetchingAnimation();
-
-                displayPredictions(predictionData);
-            })
-            .catch(error => {
-                // Stop the fetching animation
-                stopFetchingAnimation();
-
-                console.error('Error fetching prediction data:', error);
-                const predictionsContent = document.getElementById('predictions-content');
-                predictionsContent.innerHTML = '<p>Error fetching prediction data.</p>';
-            });
-    }
-
-    function displayPredictions(predictionData) {
-        const predictionsContent = document.getElementById('predictions-content');
-        if (!predictionData || Object.keys(predictionData).length === 0) {
-            predictionsContent.innerHTML = '<p>No predictions available for the selected date.</p>';
-            return;
-        }
-
-        // Assuming predictionData is an object like { 'LANDSAT 8': [...], 'LANDSAT 9': [...] }
-
-        let content = '';
-        for (const satellite in predictionData) {
-            const times = predictionData[satellite];
-            content += `<h6>${satellite}:</h6><ul>`;
-            times.forEach(time => {
-                const formattedTime = formatDateTime(time);
-                content += `<li>${formattedTime}</li>`;
-            });
-            content += '</ul>';
-        }
-
-        predictionsContent.innerHTML = content;
     }
 
     function formatDateTime(utcString) {
@@ -165,11 +60,6 @@
             hour12: false,
             timeZoneName: 'short'
         };
-        const localeString = date.toLocaleString(undefined, options);
-        const [datePart, timePartWithZone] = localeString.split(', ');
-        const [timePart, timeZone] = timePartWithZone.split(' ');
-        const [month, day, year] = datePart.split('/');
-        const formattedDate = `${month}-${day}-${year}`;
-        return `${formattedDate} @ ${timePart} ${timeZone}`;
+        return date.toLocaleString(undefined, options);
     }
 </script>

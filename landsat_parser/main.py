@@ -1,3 +1,4 @@
+import os
 from typing import DefaultDict, List
 from collections import defaultdict
 from datetime import datetime
@@ -7,7 +8,6 @@ from shapely.geometry import Polygon
 from landsatxplore.api import API
 from landsatxplore.earthexplorer import EarthExplorer
 from skyfield.api import Time, Topos, load
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -48,7 +48,9 @@ def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
     return dict(results)
 
 
-def get_last_scene_metadata(lat: float, lon: float):
+def get_scene_metadata(
+    lat: float, lon: float, start_date: str, end_date: str, cloud_coverage: float = 100
+):
     username = "spaceapps43"
     password = "EdBB4#XDQcz@Kr"
 
@@ -56,37 +58,36 @@ def get_last_scene_metadata(lat: float, lon: float):
 
     scenes = api.search(
         dataset="landsat_ot_c2_l2",
-        max_results=1,
         latitude=lat,
         longitude=lon,
-        start_date=datetime.now().strftime("%Y-%m-%d"),
-        max_cloud_cover=20,
+        start_date=start_date,
+        end_date=end_date,
+        max_cloud_cover=cloud_coverage,
     )
 
-    # for scene in scenes:
-    #     print(scene["acquisition_date"].strftime("%Y-%m-%d"))
-    #     # Write scene footprints to disk
-    #     fname = f"{scene['display_id']}.geojson"
-    #     print(scene)
-    #     # with open(fname, "w") as f:
-    #     #     json.dump(scene["spatial_coverage"].__geo_interface__, f)
     if not scenes:
         return None
 
-    scene = scenes[0]
-    bounds: Polygon = scene["spatial_coverage"]
+    results = []
+    for scene in scenes:
+        print(scene)
+        bounds: Polygon = scene["spatial_coverage"]
 
-    scene = {
-        "spatial_coverage": list(bounds.exterior.coords),
-        "acquisition_date": str(scene["acquisition_date"]),
-        "cloud_cover": scene["cloud_cover"],
-        "wrs_path": scene["wrs_path"],
-        "wrs_row": scene["wrs_path"],
-        "land_cloud_cover": scene["land_cloud_cover"],
-        "scene_cloud_cover": scene["scene_cloud_cover"],
-        "entity_id": scene["entity_id"],
-        "display_id": scene["display_id"],
-    }
+        results.append(
+            {
+                "spatial_coverage": list(bounds.exterior.coords),
+                "acquisition_date": scene["start_time"].isoformat(),
+                "cloud_cover": scene["cloud_cover"],
+                "wrs_path": scene["wrs_path"],
+                "wrs_row": scene["wrs_path"],
+                "land_cloud_cover": scene["land_cloud_cover"],
+                "scene_cloud_cover": scene["scene_cloud_cover"],
+                "entity_id": scene["entity_id"],
+                "display_id": scene["display_id"],
+                "satellite": scene["satellite"],
+            }
+        )
+    return results
 
     # "cloud_cover": 0,
     # "entity_id": "LC80200282024273LGN00",
@@ -143,7 +144,6 @@ def get_last_scene_metadata(lat: float, lon: float):
     # "spatial_coverage": "<POLYGON ((-83.655 45.382, -81.298 44.952, -80.628 46.657, -83.058 47.091, -...>",
     # "temporal_coverage": [datetime(2024, 9, 29, 0, 0), datetime(2024, 9, 29, 0, 0)],
     # "publish_date": datetime(2024, 10, 5, 16, 9, 23),
-    return scene
 
 
 def get_is_cached_download(display_id: str):  # check if the download is cached
@@ -174,14 +174,10 @@ def download_scene(display_id: str, folder_path: str):
         print(f"Download completed for {display_id}")
 
         output_folder = os.path.join(folder_path, display_id)
-        os.makedirs(
-            output_folder, exist_ok=True
-        )
+        os.makedirs(output_folder, exist_ok=True)
 
         tar_name = f"{display_id}.tar"
-        tar_file_path = os.path.join(
-            folder_path, tar_name
-        )
+        tar_file_path = os.path.join(folder_path, tar_name)
 
         if os.path.exists(tar_file_path):
             with tarfile.open(tar_file_path, "r") as tar:
@@ -233,6 +229,9 @@ if __name__ == "__main__":
     lon = -83.00
 
     # print(get_last_scene_metadata(lat, lon))
+    end_date = datetime.now()
+    start_date = datetime(year=2024, month=9, day=1).strftime("%Y-%m-%d")
+    print(get_scene_metadata(lat, lon, start_date, end_date.strftime("%Y-%m-%d")))
 
     # # Initialize the EarthExplorer instance
     # username = "spaceapps43"

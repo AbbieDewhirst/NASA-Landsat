@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta
 import os
 import secrets
-from datetime import datetime, timedelta
 
 import bcrypt
 from dotenv import load_dotenv
@@ -18,7 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 from skyfield.api import load
 
 from landsat_parser.main import (
-    get_last_scene_metadata,
+    get_scene_metadata,
     predict_passover,
     get_is_cached_download,
     start_download,
@@ -132,8 +132,16 @@ def predict_passover_endpoint():
 def get_metadata():
     lat = float(request.args.get("lat", 0))
     lon = float(request.args.get("lon", 0))
+    start_date = request.args.get("start_date", datetime.now().strftime("%Y-%m-%d"))
+    end_date = request.args.get("end_date", datetime.now().strftime("%Y-%m-%d"))
 
-    results = get_last_scene_metadata(lat, lon)
+    start_date = (
+        datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=1)
+    ).strftime("%Y-%m-%d")
+
+    cloud_coverage = int(request.args.get("cloud_coverage", 100))
+
+    results = get_scene_metadata(lat, lon, start_date, end_date, cloud_coverage)
     return jsonify(results)
 
 
@@ -156,8 +164,14 @@ def schedule():
         if not run_time:
             return jsonify({"error": "Invalid datetime format"}), HTTPStatus.BAD_REQUEST
 
+        send_email(
+            "Landsat Subscription Notification",
+            f"Thank you for using the Satelleyes Landsat system!\n\nYou'll be notified at {run_time} when the satellite is near the selected location.",
+            [current_user.email],
+        )
+
         run_time_dt = datetime.fromisoformat(run_time)
-        job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}"
+        job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}_{secrets.token_hex()}"
 
         scheduler.add_job(
             func=scheduled_task,
@@ -168,7 +182,7 @@ def schedule():
         )
 
         return jsonify(
-            {"message": f"Job scheduled to run at {run_time_dt} with id {job_id}"}
+            {"message": f"You will be notified at {run_time_dt}"}
         ), HTTPStatus.OK
 
     except Exception as e:

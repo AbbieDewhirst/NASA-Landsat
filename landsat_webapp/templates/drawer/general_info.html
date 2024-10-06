@@ -1,0 +1,12 @@
+<!-- general_info.html -->
+<div class="drawer-section" id="general-info-section">
+    <h5>General Info</h5>
+    <p>Longitude: {{ longitude }}<br>Latitude: {{ latitude }}</p>
+</div>
+<hr>
+
+<script>
+    function updateGeneralInfo(lng, lat) {
+        document.querySelector('#general-info-section p').innerHTML = `Longitude: ${lng}<br>Latitude: ${lat}`;
+    }
+</script>
