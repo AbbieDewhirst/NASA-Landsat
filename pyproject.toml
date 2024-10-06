@@ -12,6 +12,11 @@ bcrypt = "^4.2.0"
 flask-login = "^0.6.3"
 python-dotenv = "^1.0.1"
 flask-sqlalchemy = "^3.1.1"
+python-dateutil = "^2.9.0.post0"
+shapely = "^2.0.6"
+tqdm = "^4.66.5"
+requests = "^2.32.3"
+skyfield = "^1.49"
 
 
 [tool.poetry.group.dev.dependencies]
