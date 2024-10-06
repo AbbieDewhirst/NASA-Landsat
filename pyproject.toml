@@ -19,6 +19,7 @@ requests = "^2.32.3"
 skyfield = "^1.49"
 apscheduler = "^3.10.4"
 flask-apscheduler = "^1.13.1"
+rasterio = "^1.4.1"
 
 
 [tool.poetry.group.dev.dependencies]
