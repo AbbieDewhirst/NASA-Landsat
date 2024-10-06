@@ -1,0 +1,99 @@
+<!-- passover_predictions.html -->
+<div class="drawer-section" id="predictions-section">
+    <h5>Passover Predictions of Landsat</h5>
+    <div class="mb-3">
+        <label for="date-input" class="form-label">Select Date:</label>
+        <input type="date" id="date-input" class="form-control" min="${getCurrentDateString()}" max="${getOneMonthLaterDateString()}">
+    </div>
+    <button id="fetch-predictions-btn" class="btn btn-primary mb-3">Fetch Predictions</button>
+    <div id="predictions-content"></div>
+</div>
+<hr>
+
+<script>
+    function getCurrentDateString() {
+        const today = new Date();
+        return today.toISOString().split('T')[0]; // yyyy-mm-dd
+    }
+
+    function getOneMonthLaterDateString() {
+        const today = new Date();
+        today.setMonth(today.getMonth() + 1);
+        return today.toISOString().split('T')[0];
+    }
+
+    function fetchPredictions() {
+        const dateInput = document.getElementById('date-input').value;
+        if (!dateInput) {
+            alert('Please select a date.');
+            return;
+        }
+
+        const selectedDate = new Date(dateInput);
+        const today = new Date();
+        const timeDiff = selectedDate - today;
+        const daysAhead = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+
+        if (daysAhead < 0 || daysAhead > 32) {
+            alert('Please select a date within the next month.');
+            return;
+        }
+
+        const { lng, lat } = window.drawerData;
+
+        // Start the fetching animation
+        const predictionsContent = document.getElementById('predictions-content');
+        startFetchingAnimation(predictionsContent);
+
+        // Call the predict endpoint
+        fetch(`/predict?lat=${lat}&lon=${lng}&days=${daysAhead}`)
+            .then(response => response.json())
+            .then(predictionData => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                displayPredictions(predictionData);
+            })
+            .catch(error => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                console.error('Error fetching prediction data:', error);
+                predictionsContent.innerHTML = '<p>Error fetching prediction data.</p>';
+            });
+    }
+
+    function displayPredictions(predictionData) {
+        const predictionsContent = document.getElementById('predictions-content');
+        if (!predictionData || Object.keys(predictionData).length === 0) {
+            predictionsContent.innerHTML = '<p>No predictions available for the selected date.</p>';
+            return;
+        }
+
+        let content = `
+        <h6>When would you like to be notified?</h6>
+        <select id="notifySelect" class="form-select" aria-label="Default select example">
+            <option value=60>60 minutes before</option>
+            <option value=30>30 minutes before</option>
+            <option value=15>15 minutes before</option>
+        </select><br/>
+        `;
+        for (const satellite in predictionData) {
+            const times = predictionData[satellite];
+            content += `<h6>${satellite}:</h6><ul>`;
+            times.forEach(time => {
+                const formattedTime = formatDateTime(time);
+                content += `<li>${formattedTime}
+                    <span ${loggedIn ? '' : 'title="Login to Receive Notifications!"'}>
+                        <button class="btn btn-sm btn-primary ms-2 ${loggedIn ? '' : 'disabled'}"
+                        onclick="subscribeAtTime('${satellite}', '${time}')" >
+                            Notify Me
+                        </button>
+                    </span>
+                </li>`;
+            });
+            content += '</ul>';
+        }
+        predictionsContent.innerHTML = content;
+    }
+</script>
