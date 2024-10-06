@@ -137,20 +137,70 @@
             return;
         }
 
-        // Assuming predictionData is an object like { 'LANDSAT 8': [...], 'LANDSAT 9': [...] }
 
-        let content = '';
+        let content = `
+        <h6>When would you like to be notified?</h6>
+        <select id="notifySelect" class="form-select" aria-label="Default select example">
+            <option value=60>60 minutes before</option>
+            <option value=30>30 minutes before</option>
+            <option value=15>15 minutes before</option>
+        </select><br/>
+        `;
         for (const satellite in predictionData) {
             const times = predictionData[satellite];
             content += `<h6>${satellite}:</h6><ul>`;
             times.forEach(time => {
                 const formattedTime = formatDateTime(time);
-                content += `<li>${formattedTime}</li>`;
+                content += `<li>${formattedTime}
+                    <span ${loggedIn ? '' : 'title="Login to Receive Notifications!"'}>
+                        <button class="btn btn-sm btn-primary ms-2 ${loggedIn ? '' : 'disabled'}"
+                        onclick="subscribeAtTime('${satellite}', '${time}')" >
+                            Notify Me
+                        </button>
+                    </span>
+                </li>`;
             });
             content += '</ul>';
         }
-
         predictionsContent.innerHTML = content;
+        tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    }
+
+    function subscribeAtTime(satellite, time) {
+        const notifyBefore = document.getElementById("notifySelect").value;
+        const { lng, lat } = window.drawerData;
+        let runTime = new Date(Date.now() + 15000).toISOString();
+
+        // get datetime and subtract lead time minutes
+        const date = new Date(time);
+        date.setMinutes(date.getMinutes() - notifyBefore);
+        runTime = date.toISOString();
+
+        const data = {
+            run_time: runTime,
+            message: `${satellite} is going to be over ${lng}, ${lat} in ${notifyBefore} minutes!`
+        };
+
+        fetch("/schedule", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result)
+                if(result.message){
+                    alert('Success: ' + result.message);
+                }else{
+                    alert('Error: ' + result.error);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
     }
 
     function formatDateTime(utcString) {
