@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import os
 import secrets
 import bcrypt
@@ -11,7 +11,7 @@ from skyfield.api import load
 
 from landsat_parser.main import predict_passover
 
-from landsat_parser.main import get_last_scene_metadata
+from landsat_parser.main import get_scene_metadata
 
 load_dotenv()
 
@@ -108,12 +108,16 @@ def predict_passover_endpoint():
     # Return the first occurrence of passovers for both satellites
     return jsonify(prediction_results)
 
+
 @app.get("/metadata")
 def get_metadata():
-    lat = float(request.args.get('lat', 0))
-    lon = float(request.args.get('lon', 0))
+    lat = float(request.args.get("lat", 0))
+    lon = float(request.args.get("lon", 0))
+    start_date = request.args.get("start_date", datetime.now().strftime("%Y-%m-%d"))
+    end_date = request.args.get("end_date", datetime.now().strftime("%Y-%m-%d"))
+    cloud_coverage = int(request.args.get("cloud_coverage", 100))
 
-    results = get_last_scene_metadata(lat, lon)
+    results = get_scene_metadata(lat, lon, start_date, end_date, cloud_coverage)
     return jsonify(results)
 
 
