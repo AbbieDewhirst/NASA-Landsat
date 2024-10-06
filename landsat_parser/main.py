@@ -2,12 +2,13 @@ import os
 from typing import DefaultDict, List
 from collections import defaultdict
 from datetime import datetime
+import tarfile
 
 from shapely.geometry import Polygon
 from landsatxplore.api import API
 from landsatxplore.earthexplorer import EarthExplorer
 from skyfield.api import Time, Topos, load
-import os
+from concurrent.futures import ThreadPoolExecutor
 
 
 def load_sat_data(filename: str):
@@ -145,6 +146,81 @@ def get_scene_metadata(
     # "publish_date": datetime(2024, 10, 5, 16, 9, 23),
 
 
+def get_is_cached_download(display_id: str):  # check if the download is cached
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    file_name = f"scene_out/{display_id}"
+    file_path = os.path.join(curdir, file_name)
+
+    if os.path.isdir(file_path):
+        return True
+
+    return False
+
+
+executor = ThreadPoolExecutor(max_workers=100)
+ongoing_downloads = {}
+
+
+def download_scene(display_id: str, folder_path: str):
+    """Function to handle the actual download for a given display_id and extract files."""
+    username = "spaceapps43"
+    password = "EdBB4#XDQcz@Kr"
+    ee = EarthExplorer(username, password)
+
+    print("STARTING DOWNLOAD")
+
+    try:
+        ee.download(display_id, folder_path, dataset="landsat_ot_c2_l2")
+        print(f"Download completed for {display_id}")
+
+        output_folder = os.path.join(folder_path, display_id)
+        os.makedirs(output_folder, exist_ok=True)
+
+        tar_name = f"{display_id}.tar"
+        tar_file_path = os.path.join(folder_path, tar_name)
+
+        if os.path.exists(tar_file_path):
+            with tarfile.open(tar_file_path, "r") as tar:
+                tar.extractall(path=output_folder)
+            print(f"Extracted tar file into {output_folder}")
+        else:
+            print(f"Tar file {tar_file_path} not found.")
+
+        return True
+    except Exception as e:
+        print(f"Failed to download or extract {display_id}: {e}")
+        return False
+
+
+def start_download(display_id: str):
+    """Function to start the download in the background and return immediately."""
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    folder_path = os.path.join(curdir, "scene_out")
+
+    os.makedirs(folder_path, exist_ok=True)
+
+    future = executor.submit(download_scene, display_id, folder_path)
+
+    ongoing_downloads[display_id] = future
+    print(f"Download for {display_id} has started.")
+
+    if ongoing_downloads[display_id]:
+        return True
+
+    return False
+
+
+def is_downloading(display_id: str) -> bool:
+    """Function to check if a specific download is still running."""
+    future = ongoing_downloads.get(display_id)
+    print(ongoing_downloads)
+    if not future:
+        print(f"No download found for {display_id}")
+        return False
+
+    return not future.done()
+
+
 SERVICE_URL = "https://m2m.cr.usgs.gov/api/api/json/development/"
 
 if __name__ == "__main__":
@@ -152,6 +228,7 @@ if __name__ == "__main__":
     lat = 46.00
     lon = -83.00
 
+    # print(get_last_scene_metadata(lat, lon))
     end_date = datetime.now()
     start_date = datetime(year=2024, month=9, day=1).strftime("%Y-%m-%d")
     print(get_scene_metadata(lat, lon, start_date, end_date.strftime("%Y-%m-%d")))
@@ -160,5 +237,15 @@ if __name__ == "__main__":
     # username = "spaceapps43"
     # password = "EdBB4#XDQcz@Kr"
     # ee = EarthExplorer(username, password)
-    # # Download a specific scene by scene's entity_id
-    # ee.download("LC90200302024249LGN00", "./scene_out", dataset="landsat_ot_c2_l2")
+    # Download a specific scene by scene's entity_id
+
+    display_id = "LC09_L2SP_020030_20240905_20240906_02_T1"
+
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    folder_name = "scene_out"
+    folder_path = os.path.join(curdir, folder_name)
+    print(folder_path)
+
+    # ee.download(display_id, folder_path, dataset="landsat_ot_c2_l2")
+
+    print(get_is_cached_download(display_id))
