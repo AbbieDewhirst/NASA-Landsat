@@ -1,0 +1,183 @@
+<!-- cloud_coverage.html -->
+<div class="drawer-section" id="cloud-coverage-section">
+    <h5>Cloud Coverage</h5>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="enable-cloud-coverage">
+        <label class="form-check-label" for="enable-cloud-coverage">Enable Cloud Coverage</label>
+    </div>
+
+    <!-- Collapsible Cloud Coverage Section -->
+    <div id="cloud-coverage-collapse" class="collapse">
+        <div class="mb-3">
+            <label for="slider" class="form-label">Cloud Coverage</label>
+            <input type="range" id="slider" class="form-range" min="0" max="100" value="50">
+            <span id="slider-value">50%</span>
+        </div>
+
+        <div class="mb-3">
+            <label for="start-date" class="form-label">From:</label>
+            <input type="date" id="start-date" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="end-date" class="form-label">To:</label>
+            <input type="date" id="end-date" class="form-control">
+        </div>
+        <button id="fetch-metadata-btn" class="btn btn-primary mb-3">Fetch Metadata</button>
+        <div id="metadata-content"></div>
+    </div>
+</div>
+<hr>
+
+<script>
+    function attachCloudCoverageListeners() {
+        const enableCloudCoverage = document.getElementById('enable-cloud-coverage');
+        enableCloudCoverage.addEventListener('change', (event) => {
+            const isEnabled = event.target.checked;
+            const cloudCoverageCollapse = document.getElementById('cloud-coverage-collapse');
+
+            if (isEnabled) {
+                new bootstrap.Collapse(cloudCoverageCollapse, { show: true });
+            } else {
+                new bootstrap.Collapse(cloudCoverageCollapse, { hide: true });
+            }
+        });
+
+        const slider = document.getElementById('slider');
+        const sliderValue = document.getElementById('slider-value');
+        slider.addEventListener('input', (event) => {
+            sliderValue.textContent = `${event.target.value}%`;
+        });
+
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        startDateInput.value = getOneMonthEarlierDateString();
+        endDateInput.value = getCurrentDateString();
+        startDateInput.max = getCurrentDateString();
+        endDateInput.max = getCurrentDateString();
+
+        endDateInput.addEventListener('input', () => {
+            startDateInput.max = endDateInput.value;
+        });
+
+        startDateInput.addEventListener('input', () => {
+            endDateInput.min = startDateInput.value;
+        });
+
+        const fetchMetadataButton = document.getElementById('fetch-metadata-btn');
+        fetchMetadataButton.addEventListener('click', fetchMetadata);
+    }
+
+    function fetchMetadata() {
+        const { lng, lat } = window.drawerData;
+        const cloudCoverage = document.getElementById('slider').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        const metadataContent = document.getElementById('metadata-content');
+        startFetchingAnimation(metadataContent);
+
+        fetch(`/metadata?lat=${lat}&lon=${lng}&cloud_coverage=${cloudCoverage}&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(metadataList => {
+                stopFetchingAnimation();
+                displayMetadata(metadataList);
+            })
+            .catch(error => {
+                stopFetchingAnimation();
+                console.error('Error fetching metadata:', error);
+                metadataContent.innerHTML = '<p>Error fetching metadata.</p>';
+            });
+    }
+
+    function displayMetadata(metadataList) {
+        const metadataContent = document.getElementById('metadata-content');
+        if (!metadataList || metadataList.length === 0) {
+            metadataContent.innerHTML = '<p>No metadata available for the selected criteria.</p>';
+            return;
+        }
+
+        // Group metadata by satellite
+        const satellites = {
+            8: [],
+            9: []
+        };
+
+        metadataList.forEach(metadata => {
+            const satelliteNumber = metadata.satellite;
+            if (satelliteNumber === 8 || satelliteNumber === 9) {
+                satellites[satelliteNumber].push(metadata);
+            }
+        });
+
+        let content = '';
+
+        // Render collapsible sections for each satellite
+        Object.keys(satellites).forEach(satelliteNumber => {
+            const satelliteData = satellites[satelliteNumber];
+
+            if (satelliteData.length > 0) {
+                content += `
+                    <button class="btn btn-secondary mb-2" data-bs-toggle="collapse" data-bs-target="#satellite-section-${satelliteNumber}" aria-expanded="false">
+                        Satellite ${satelliteNumber}
+                    </button>
+                    <div id="satellite-section-${satelliteNumber}" class="collapse">
+                `;
+
+                satelliteData.forEach((metadata, index) => {
+                    const {
+                        acquisition_date,
+                        cloud_cover,
+                        display_id,
+                        landsat_product_id,
+                        wrs_path,
+                        wrs_row,
+                        spatial_coverage,
+                        land_cloud_cover,
+                        scene_cloud_cover
+                    } = metadata;
+
+                    // Format spatial coverage as a string
+                    const spatialCoverageStr = spatial_coverage.map(coord => `(${coord[0].toFixed(2)}, ${coord[1].toFixed(2)})`).join(', ');
+
+                    content += `
+                        <div class="card mb-2">
+                            <div class="card-header" id="heading-${satelliteNumber}-${index}">
+                                <h5 class="mb-0">
+                                    <button class="btn btn-outline-success" data-bs-toggle="collapse" data-bs-target="#collapse-${satelliteNumber}-${index}" aria-expanded="true" aria-controls="collapse-${satelliteNumber}-${index}">
+                                        Acquisition Date: ${new Date(acquisition_date).toLocaleDateString()}
+                                    </button>
+                                </h5>
+                            </div>
+
+                            <div id="collapse-${satelliteNumber}-${index}" class="collapse" aria-labelledby="heading-${satelliteNumber}-${index}" data-bs-parent="#satellite-section-${satelliteNumber}">
+                                <div class="card-body">
+                                    <p><strong>Cloud Coverage:</strong> ${cloud_cover}%</p>
+                                    <p><strong>Land Cloud Coverage:</strong> ${land_cloud_cover}%</p>
+                                    <p><strong>Scene Cloud Coverage:</strong> ${scene_cloud_cover}%</p>
+                                    <p><strong>Landsat Product ID:</strong> ${landsat_product_id}</p>
+                                    <p><strong>WRS Path/Row:</strong> ${wrs_path}/${wrs_row}</p>
+                                    <p><strong>Spatial Coverage (Bounding Box):</strong> ${spatialCoverageStr}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                content += `</div>`; // Close satellite section
+            }
+        });
+
+        metadataContent.innerHTML = content;
+    }
+
+    function getCurrentDateString() {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    }
+
+    function getOneMonthEarlierDateString() {
+        const today = new Date();
+        today.setMonth(today.getMonth() - 1);
+        return today.toISOString().split('T')[0];
+    }
+</script>

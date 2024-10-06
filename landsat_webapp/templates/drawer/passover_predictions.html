@@ -1,0 +1,178 @@
+<!-- passover_predictions.html -->
+<div class="drawer-section" id="predictions-section">
+    <h5>Passover Predictions of Landsat</h5>
+    <div class="mb-3">
+        <label for="date-input" class="form-label">Select Date:</label>
+        <input type="date" id="date-input" class="form-control" min="${getCurrentDateString()}" max="${getOneMonthLaterDateString()}">
+    </div>
+    <button id="fetch-predictions-btn" class="btn btn-primary mb-3">Fetch Predictions</button>
+    <div id="predictions-content"></div>
+</div>
+<hr>
+
+<script>
+    document.getElementById('date-input').min = getCurrentDateString();
+
+    function getCurrentDateString() {
+        const today = new Date();
+        return today.toISOString().split('T')[0]; // yyyy-mm-dd
+    }
+    function getOneMonthLaterDateString() {
+        const today = new Date();
+        today.setMonth(today.getMonth() + 1);
+        return today.toISOString().split('T')[0];
+    }
+
+    function fetchPredictions() {
+        const dateInput = document.getElementById('date-input').value;
+        if (!dateInput) {
+            alert('Please select a date.');
+            return;
+        }
+
+        const selectedDate = new Date(dateInput);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to 00:00 for comparison
+
+        if (selectedDate < today) {
+            alert('Please select today\'s date or a future date.');
+            return;
+        }
+
+        const timeDiff = selectedDate - today;
+        const daysAhead = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+
+        if (daysAhead > 32) {
+            alert('Please select a date within the next month.');
+            return;
+        }
+
+        const { lng, lat } = window.drawerData || {};
+        if (typeof lng === 'undefined' || typeof lat === 'undefined') {
+            alert('Location data is not set. Please select a valid location.');
+            return;
+        }
+
+        // Start the fetching animation
+        const predictionsContent = document.getElementById('predictions-content');
+        startFetchingAnimation(predictionsContent);
+
+        // Call the predict endpoint
+        fetch(`/predict?lat=${lat}&lon=${lng}&days=${daysAhead}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(predictionData => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                displayPredictions(predictionData);
+            })
+            .catch(error => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                console.error('Error fetching prediction data:', error);
+                predictionsContent.innerHTML = '<p>Error fetching prediction data.</p>';
+            });
+    }
+
+    function displayPredictions(predictionData) {
+        const predictionsContent = document.getElementById('predictions-content');
+        if (!predictionData || Object.keys(predictionData).length === 0) {
+            predictionsContent.innerHTML = '<p>No predictions available for the selected date.</p>';
+            return;
+        }
+
+        let content = `
+        <h6>When would you like to be notified?</h6>
+        <select id="notifySelect" class="form-select" aria-label="Default select example">
+            <option value="60">60 minutes before</option>
+            <option value="30">30 minutes before</option>
+            <option value="15">15 minutes before</option>
+        </select><br/>
+        `;
+        for (const satellite in predictionData) {
+            const times = predictionData[satellite];
+            content += `<h6>${satellite}:</h6><ul>`;
+            times.forEach(time => {
+                const formattedTime = formatDateTime(time);
+                content += `<li>${formattedTime}
+                    <span ${typeof loggedIn !== 'undefined' && loggedIn ? '' : 'title="Login to Receive Notifications!"'}>
+                        <button class="btn btn-sm btn-primary ms-2 ${typeof loggedIn !== 'undefined' && loggedIn ? '' : 'disabled'}"
+                        onclick="subscribeAtTime('${satellite}', '${time}')">
+                            Notify Me
+                        </button>
+                    </span>
+                </li>`;
+            });
+            content += '</ul>';
+        }
+        predictionsContent.innerHTML = content;
+    }
+
+    function subscribeAtTime(satellite, time) {
+        const notifyBefore = document.getElementById("notifySelect").value;
+        const { lng, lat } = window.drawerData;
+
+        // Calculate the notification time
+        const date = new Date(time);
+        date.setMinutes(date.getMinutes() - notifyBefore);
+        const runTime = date.toISOString();
+
+        const data = {
+            run_time: runTime,
+            message: `${satellite} is going to be over ${lng}, ${lat} in ${notifyBefore} minutes!`
+        };
+
+        // Send a POST request to the backend to schedule the notification
+        fetch("/schedule", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to subscribe to notification.');
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.message) {
+                    alert('Success: ' + result.message);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+    }
+
+    function formatDateTime(utcString) {
+        const date = new Date(utcString);
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+            timeZoneName: 'short'
+        };
+        const localeString = date.toLocaleString(undefined, options);
+        const [datePart, timePartWithZone] = localeString.split(', ');
+        const [timePart, timeZone] = timePartWithZone.split(' ');
+        const [month, day, year] = datePart.split('/');
+        return `${month}-${day}-${year} @ ${timePart} ${timeZone}`;
+    }
+
+    // Add event listener to the button
+    document.getElementById('fetch-predictions-btn').addEventListener('click', fetchPredictions);
+</script>
