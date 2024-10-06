@@ -7,7 +7,9 @@ body, html {
     height: 100%;
     font-family: Arial, sans-serif;
 }
-
+body {
+    padding-top: 70px; /* Adjust this value if your navbar is taller */
+}
 /* Navbar Styling */
 .navbar {
     position: fixed;
