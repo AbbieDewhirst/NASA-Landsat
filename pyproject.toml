@@ -17,6 +17,8 @@ shapely = "^2.0.6"
 tqdm = "^4.66.5"
 requests = "^2.32.3"
 skyfield = "^1.49"
+apscheduler = "^3.10.4"
+flask-apscheduler = "^1.13.1"
 
 
 [tool.poetry.group.dev.dependencies]

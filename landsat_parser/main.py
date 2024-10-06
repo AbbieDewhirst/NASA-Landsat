@@ -7,6 +7,7 @@ from shapely.geometry import Polygon
 from landsatxplore.api import API
 from landsatxplore.earthexplorer import EarthExplorer
 from skyfield.api import Time, Topos, load
+import os
 
 
 def load_sat_data(filename: str):
