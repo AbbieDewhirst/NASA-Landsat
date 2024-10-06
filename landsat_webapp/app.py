@@ -5,16 +5,16 @@ import secrets
 import bcrypt
 from dotenv import load_dotenv
 from flask import Flask, flash, jsonify, redirect, render_template, request
-from flask_apscheduler import APScheduler
-from flask_login import (
-    LoginManager,
-    UserMixin,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    UserMixin,
+    LoginManager,
+    current_user,
+    logout_user,
+    login_user,
+    login_required,
+)
+from flask_apscheduler import APScheduler
 from skyfield.api import load
 
 from landsat_parser.main import (
@@ -25,6 +25,7 @@ from landsat_parser.main import (
     start_download,
     is_downloading,
 )
+from landsat_parser.tiff_parser import parse_tiff_pixel
 from landsat_webapp.mailer import send_email
 
 from http import HTTPStatus
@@ -152,6 +153,16 @@ def get_recent_metadata():
 
     results = get_recent_scene_metadata(lat, lon)
     return jsonify(results)
+
+@app.get("/l1-data")
+def get_l1_data():
+    display_id = request.args.get("display_id", "")
+    lat = float(request.args.get("lat", 0))
+    lon = float(request.args.get("lon", 0))
+
+    bands = parse_tiff_pixel(display_id, lat, lon)
+    return jsonify({"band_values": bands})
+
 
 # Function to be scheduled
 def scheduled_task(message, email):
