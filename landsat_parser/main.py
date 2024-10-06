@@ -82,6 +82,7 @@ def get_scene_metadata(
                 "scene_cloud_cover": scene["scene_cloud_cover"],
                 "entity_id": scene["entity_id"],
                 "display_id": scene["display_id"],
+                "satellite": scene["satellite"],
             }
         )
     return results
