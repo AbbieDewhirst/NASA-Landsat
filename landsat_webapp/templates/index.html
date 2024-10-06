@@ -1,24 +1,130 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-    }
 
-    #map {
-        width: 100%;
-        height: 90vh;
-    }
-</style>
+<!-- Include the drawer template -->
+{% include "drawer.html" %}
+
+<!-- Drawer toggle button -->
+<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDrawer"
+    aria-controls="offcanvasDrawer" id="drawer-toggle">
+    ☰
+</button>
+
+<!-- Map container -->
 <div id="map"></div>
+
+<!-- Include the cloud slider template -->
+{% include "cloud_slider.html" %}
+
+<!-- Mapbox GL JS Initialization and Other Scripts -->
 <script>
-	mapboxgl.accessToken = 'pk.eyJ1IjoiYWRld2hpcnN0IiwiYSI6ImNseHZ4MXk0dDF6ZXYyanB0NGtob2Z3OXYifQ.dPt4lCIz5PLJU_sA22tvGQ';
+    // Mapbox GL JS initialization
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWRld2hpcnN0IiwiYSI6ImNseHZ4MXk0dDF6ZXYyanB0NGtob2Z3OXYifQ.dPt4lCIz5PLJU_sA22tvGQ';
     const map = new mapboxgl.Map({
         container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
         center: [-83, 42.1],
         zoom: 9
     });
+
+    let currentMarker;
+    let markersData = []; // Array to store marker data
+
+    // Function to add a marker with a styled popup at the specified coordinates
+    function addMarker(lng, lat) {
+        // Remove the existing marker, if any
+        if (currentMarker) {
+            currentMarker.remove();
+        }
+
+        // Create a new marker with a styled popup
+        currentMarker = new mapboxgl.Marker({ color: 'black' })
+            .setLngLat([lng, lat])
+            .setPopup(
+                new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
+                    .setHTML(
+                        `<h3>Coordinates</h3><p>Longitude: ${lng}<br>Latitude: ${lat}</p>`
+                    )
+            )
+            .addTo(map);
+
+        // Open the popup
+        currentMarker.getPopup().addTo(map);
+
+        // Store marker data
+        markersData.push({ longitude: lng, latitude: lat });
+    }
+
+    // Add marker from input
+    function addMarkerFromInput() {
+        const lng = parseFloat(document.getElementById('lng').value);
+        const lat = parseFloat(document.getElementById('lat').value);
+
+        if (!isNaN(lng) && !isNaN(lat)) {
+            addMarker(lng, lat);
+            map.flyTo({ center: [lng, lat], zoom: 12 });
+        } else {
+            alert('Please enter valid coordinates.');
+        }
+    }
+
+    // Add marker on map click
+    map.on('click', (event) => {
+        const coordinates = event.lngLat;
+        addMarker(coordinates.lng, coordinates.lat);
+
+        // Update input fields
+        document.getElementById('lng').value = coordinates.lng;
+        document.getElementById('lat').value = coordinates.lat;
+    });
+
+    // Export data to CSV
+    function exportToCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,Longitude,Latitude\n";
+        markersData.forEach((marker) => {
+            csvContent += `${marker.longitude},${marker.latitude}\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "markers_data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Resize map when Offcanvas is shown or hidden
+    const offcanvasDrawer = document.getElementById('offcanvasDrawer');
+    offcanvasDrawer.addEventListener('shown.bs.offcanvas', () => {
+        map.resize();
+    });
+    offcanvasDrawer.addEventListener('hidden.bs.offcanvas', () => {
+        map.resize();
+    });
 </script>
+
+<script>
+    // Get references to the navbar collapse element and drawer toggle button
+    const navbarCollapse = document.getElementById('navbarSupportedContent');
+    const drawerToggleButton = document.getElementById('drawer-toggle');
+
+    // Function to toggle the visibility of the drawer toggle button
+    function toggleDrawerButton() {
+        if (navbarCollapse.classList.contains('show')) {
+            drawerToggleButton.style.display = 'none';
+        } else {
+            drawerToggleButton.style.display = 'block';
+        }
+    }
+
+    // Listen for the 'shown' and 'hidden' events on the navbar collapse
+    navbarCollapse.addEventListener('shown.bs.collapse', toggleDrawerButton);
+    navbarCollapse.addEventListener('hidden.bs.collapse', toggleDrawerButton);
+
+    // Initial check
+    document.addEventListener('DOMContentLoaded', toggleDrawerButton);
+</script>
+
+
 {% endblock %}

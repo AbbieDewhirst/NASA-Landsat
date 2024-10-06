@@ -1,0 +1,18 @@
+<!-- cloud_slider.html -->
+<div id="slider-container">
+    <label for="slider">Cloud Coverage</label>
+    <input type="range" id="slider" min="0" max="100" value="50">
+    <span id="slider-value">50%</span>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Slider functionality
+        const slider = document.getElementById('slider');
+        const sliderValue = document.getElementById('slider-value');
+
+        slider.addEventListener('input', (event) => {
+            sliderValue.textContent = `${event.target.value}%`;
+        });
+    });
+</script>
