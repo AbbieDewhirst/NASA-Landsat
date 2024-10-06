@@ -50,7 +50,8 @@
             <div class="text-center">
                 <h6 class="mb-2">Coordinates</h6>
                 <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                <button id="more-info-btn" class="btn btn-link">More Info Here</button>
+                <button id="more-info-btn" class="btn btn-primary mb-2">More Info Here</button>
+                <button id="request-download-btn" class="btn btn-danger">Request scene download</button>
             </div>
         `;
 
@@ -70,8 +71,11 @@
             if (event.target && event.target.id === 'more-info-btn') {
                 // Open the right-side drawer and display data
                 openInfoDrawer({ lng, lat });
+            } else if (event.target && event.target.id === 'request-download-btn') {
+                // Open the right-side drawer and display data
+                console.log('click');
             }
-        });
+       });
     }
     
     // Add marker from input
