@@ -24,6 +24,7 @@
         </div>
         <button id="fetch-metadata-btn" class="btn btn-primary mb-3">Fetch Metadata</button>
         <div id="metadata-content"></div>
+        <button id="export-json-btn" class="btn btn-success mb-3" disabled>Export JSON</button>
     </div>
 </div>
 <hr>
@@ -67,6 +68,8 @@
         fetchMetadataButton.addEventListener('click', fetchMetadata);
     }
 
+    let fetchedMetadata = []; // Global variable to store the fetched metadata
+
     function fetchMetadata() {
         const { lng, lat } = window.drawerData;
         const cloudCoverage = document.getElementById('slider').value;
@@ -80,7 +83,9 @@
             .then(response => response.json())
             .then(metadataList => {
                 stopFetchingAnimation();
+                fetchedMetadata = metadataList; // Store the fetched metadata for export
                 displayMetadata(metadataList);
+                document.getElementById('export-json-btn').disabled = metadataList.length === 0; // Enable export button if data exists
             })
             .catch(error => {
                 stopFetchingAnimation();
@@ -168,7 +173,37 @@
         });
 
         metadataContent.innerHTML = content;
+        document.getElementById('export-json-btn').disabled = false; // Enable the Export JSON button
     }
+
+    function downloadMetadataAsJSON() {
+        if (fetchedMetadata.length === 0) return; // No metadata to export
+
+        const { lng, lat } = window.drawerData;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        // Create a filename with start_time, end_time, latitude, and longitude
+        const fileName = `metadata-${startDate}-${endDate}-${lat}-${lng}.json`;
+
+        // Convert metadata to JSON and trigger download
+        const jsonStr = JSON.stringify(fetchedMetadata, null, 2); // Pretty-printed JSON
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+
+        // Simulate a click on the link to trigger download
+        link.click();
+
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('export-json-btn').addEventListener('click', downloadMetadataAsJSON);
 
     function getCurrentDateString() {
         const today = new Date();
