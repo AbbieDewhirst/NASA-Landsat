@@ -30,7 +30,7 @@ tar -xvf LC08_L1GT_114213_20241002_20241002_02_RT.tar
 - [X] 8. Acquire scene metadata such as acquisition satellite, date, time, latitude/longitude, Worldwide Reference System path and row, percent cloud cover, and image quality.
 - [ ] 9. Access and acquire Landsat SR data values (and possibly display the surface temperature data from the thermal infrared bands) for the target pixel by leveraging cloud data catalogs and existing applications.
 - [ ] 10. Display a graph of the Landsat SR data along the spectrum (i.e., the spectral signature) in addition to scene metadata.
-- [ ] 11. Allow users to download or share data in a useful format (e.g., csv).
+- [X] 11. Allow users to download or share data in a useful format (e.g., csv).
 
 
 ## Extra Info
