@@ -7,17 +7,24 @@ import os
 from dotenv import load_dotenv
 import secrets
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, LoginManager, current_user, logout_user, login_user
+from flask_login import UserMixin, LoginManager, current_user, logout_user, login_user, login_required
+from flask_apscheduler import APScheduler
 import bcrypt
 from skyfield.api import load
 from skyfield.sgp4lib import EarthSatellite
 from skyfield.toposlib import Topos
+from datetime import datetime
+from landsat_webapp.mailer import send_email
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", secrets.token_hex())
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///site.db"
+app.config['SCHEDULER_API_ENABLED'] = True
+
+scheduler = APScheduler()
+scheduler.init_app(app)
 
 db = SQLAlchemy(app)
 
@@ -160,11 +167,48 @@ def predict_passover_endpoint():
     # Return the first occurrence of passovers for both satellites
     return jsonify(first_occurrence)
 
+# Function to be scheduled
+def scheduled_task(message, email):
+    print(f"\n=============\n{message} | {email}\n=============\n")
+    send_email("New Landsat Notification", message, [email])
+    app.logger.debug(f"Scheduled Task executed: {message}")
+
+# Endpoint to schedule a new job
+@app.post('/schedule')
+@login_required
+def schedule():
+    try:
+        data = request.json
+        run_time = data.get('run_time')  # expecting 'run_time' in ISO format string
+        message = data.get('message', 'No message provided')
+
+        if not run_time:
+            return jsonify({"error": "Invalid datetime format"}), 400
+
+        run_time_dt = datetime.fromisoformat(run_time)
+        job_id = f"job_{run_time_dt.strftime('%Y%m%d%H%M%S')}"
+
+        scheduler.add_job(
+            func=scheduled_task,
+            trigger='date',
+            run_date=run_time_dt,
+            args=[message, current_user.email],
+            id=job_id
+        )
+
+        return jsonify({"message": f"Job scheduled to run at {run_time_dt} with id {job_id}"}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error scheduling job: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     # init db if not exists
-    if not os.path.exists("instance/site.db"):
-        with app.app_context():
+    with app.app_context():
+        if not os.path.exists("instance/site.db"):
             db.create_all()
+        if not scheduler.running:
+            scheduler.start()
+
     app.run(debug=True, host='0.0.0.0')
 
