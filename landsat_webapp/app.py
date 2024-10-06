@@ -1,15 +1,15 @@
 from datetime import timedelta
+import os
+import secrets
+import bcrypt
 
 from flask import Flask, render_template, request, redirect, flash, jsonify
-import os
 from dotenv import load_dotenv
-import secrets
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, current_user, logout_user, login_user
-import bcrypt
 from skyfield.api import load
 
-from landsat_parser.main import load_sat_data, predict_passover
+from landsat_parser.main import predict_passover
 
 load_dotenv()
 
@@ -34,9 +34,6 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(60), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-
-
-# Load satellite data at app startup
 
 
 # Home route for selecting location
@@ -89,19 +86,8 @@ def login_post():
     return render_template("register.html")
 
 
-from flask import jsonify
-from collections import defaultdict
-from datetime import timedelta
-from skyfield.api import Topos, load
-
-
 @app.get("/predict")
 def predict_passover_endpoint():
-    # Load the satellite data
-    curdir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(curdir, "data/tle.txt")
-    satellites = load_sat_data(filename)
-
     # Get lat and lon from the request
     lat = float(request.args.get("lat", 0))
     lon = float(request.args.get("lon", 0))
