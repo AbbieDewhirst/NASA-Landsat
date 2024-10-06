@@ -32,12 +32,12 @@ body {
 /* Drawer Toggle Button */
 #drawer-toggle {
     position: fixed;
-    top: 66px; /* Slightly below navbar */
+    top: 128px; /* Slightly below navbar */
     left: 10px;
     z-index: 1040; /* Above all elements */
     background-color: var(--bs-body-bg);
     border: none;
-    padding: 10px;
+    padding: 12px;
     cursor: pointer;
     color: var(--bs-body-color);
 }
