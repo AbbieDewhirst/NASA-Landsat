@@ -67,7 +67,7 @@ def get_recent_scene_metadata(lat: float, lon: float):
         "acquisition_date": scene["start_time"].isoformat(),
         "cloud_cover": scene["cloud_cover"],
         "wrs_path": scene["wrs_path"],
-        "wrs_row": scene["wrs_path"],
+        "wrs_row": scene["wrs_row"],
         "land_cloud_cover": scene["land_cloud_cover"],
         "scene_cloud_cover": scene["scene_cloud_cover"],
         "entity_id": scene["entity_id"],

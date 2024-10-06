@@ -1,12 +1,100 @@
 <!-- general_info.html -->
 <div class="drawer-section" id="general-info-section">
     <h5>General Info</h5>
-    <p>Longitude: {{ longitude }}<br>Latitude: {{ latitude }}</p>
+    <p id="general-info-content">Longitude: {{ longitude }}<br>Latitude: {{ latitude }}</p>
+    <div id="scene-metadata-content">
+        <!-- Recent scene metadata will be dynamically inserted here -->
+    </div>
 </div>
 <hr>
 
 <script>
     function updateGeneralInfo(lng, lat) {
-        document.querySelector('#general-info-section p').innerHTML = `Longitude: ${lng}<br>Latitude: ${lat}`;
+        document.querySelector('#general-info-content').innerHTML = `Longitude: ${lng}<br>Latitude: ${lat}`;
+        
+        // Fetch recent scene metadata using the provided lat/lon
+        fetch(`/recent-metadata?lat=${lat}&lon=${lng}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch recent scene metadata.');
+                }
+                return response.json();
+            })
+            .then(metadata => {
+                // Display the metadata in the general info section
+                displaySceneMetadata(metadata);
+                // Draw bounding box on the map
+                drawBoundingBox(metadata.spatial_coverage);
+            })
+            .catch(error => {
+                console.error('Error fetching recent scene metadata:', error);
+                document.querySelector('#scene-metadata-content').innerHTML = '<p>Error fetching recent scene metadata.</p>';
+            });
+    }
+
+    function displaySceneMetadata(metadata) {
+        if (!metadata || Object.keys(metadata).length === 0) {
+            document.querySelector('#scene-metadata-content').innerHTML = '<p>No recent scene metadata available.</p>';
+            return;
+        }
+
+        // Build the HTML content for the recent scene metadata
+        const metadataContent = `
+            <h5>Recent Scene Metadata</h5>
+            <p>Acquisition Date: ${metadata.acquisition_date}</p>
+            <p>Cloud Cover: ${metadata.cloud_cover}%</p>
+            <p>Display ID: ${metadata.display_id}</p>
+            <p>Entity ID: ${metadata.entity_id}</p>
+            <p>Land Cloud Cover: ${metadata.land_cloud_cover}%</p>
+            <p>LANDSAT: ${metadata.satellite}</p>
+            <p>Scene Cloud Cover: ${metadata.scene_cloud_cover}%</p>
+            <p>WRS Path: ${metadata.wrs_path}, WRS Row: ${metadata.wrs_row}</p>
+        `;
+
+        // Update the HTML content
+        document.querySelector('#scene-metadata-content').innerHTML = metadataContent;
+    }
+
+    function drawBoundingBox(coordinates) {
+        if (!coordinates || coordinates.length === 0) {
+            console.error('No coordinates provided for bounding box.');
+            return;
+        }
+
+        // Remove existing bounding box layer if it exists
+        removeBoundingBox();
+
+        // Create a GeoJSON feature for the bounding box
+        const boundingBoxGeoJSON = {
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': [coordinates]
+            }
+        };
+
+        // Add the bounding box as a new source and layer on the map
+        map.addSource('bounding-box-source', {
+            'type': 'geojson',
+            'data': boundingBoxGeoJSON
+        });
+
+        map.addLayer({
+            'id': 'bounding-box-layer',
+            'type': 'line',
+            'source': 'bounding-box-source',
+            'layout': {},
+            'paint': {
+                'line-color': '#FF0000',
+                'line-width': 2
+            }
+        });
+    }
+
+    function removeBoundingBox() {
+        if (map.getLayer('bounding-box-layer')) {
+            map.removeLayer('bounding-box-layer');
+            map.removeSource('bounding-box-source');
+        }
     }
 </script>

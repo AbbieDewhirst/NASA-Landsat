@@ -16,9 +16,6 @@
     function openInfoDrawer(data) {
         window.drawerData = { lng: data.lng, lat: data.lat };
 
-        // Update the content of each section
-        updateGeneralInfo(data.lng, data.lat);
-
         // Show the drawer
         const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
         infoDrawer.show();
