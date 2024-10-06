@@ -1,10 +1,4 @@
-import json
-import requests
-import sys
-import datetime
-import threading
-import re
-import time
+from typing import DefaultDict, List
 
 from collections import defaultdict
 from datetime import timedelta
@@ -26,8 +20,13 @@ def load_sat_data(filename: str):
 
 
 def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
+    # Load TLE orbital data
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(curdir, "data/tle.txt")
+    satellites = load_sat_data(filename)
+
     # Holds all the dates
-    results = defaultdict(list)
+    results: DefaultDict[str, List[str]] = defaultdict(list)
 
     for sat in satellites:
         location = Topos(latitude_degrees=lat, longitude_degrees=lon)
@@ -42,9 +41,9 @@ def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
             event_time = ti.utc_iso()  # ti is a Time object, we call utc_iso() on it
             event_name = ["rise", "culmination", "set"][event]
             if event == 0:
-                results[sat.name].append([event_time])
-            print(f"Event: {sat.name} {event_name} at {event_time}")
-    return results
+                results[sat.name].append(event_time)
+                print(f"Event: {sat.name} {event_name} at {event_time}")
+    return dict(results)
 
 
 SERVICE_URL = "https://m2m.cr.usgs.gov/api/api/json/development/"
