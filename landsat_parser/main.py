@@ -1,33 +1,34 @@
+import json
+import requests
+import sys
+import datetime
+import threading
+import re
+import time
+
 from collections import defaultdict
 from datetime import timedelta
-import json
-from typing import List
 
 from skyfield.iokit import os
 from landsatxplore.api import API
-from skyfield.api import EarthSatellite, Time, Topos, load
-from pprint import pprint
-
-satellites: List[EarthSatellite] = []
+from landsatxplore.earthexplorer import EarthExplorer
+from skyfield.api import Time, Topos, load
 
 
-def load_sat_data(filename: str) -> True:
+def load_sat_data(filename: str):
     # Load the TLE file
     satFile = load.tle_file(filename)
 
     # Find Landsat 8 and 9 satellites
     landsat8 = [sat for sat in satFile if "LANDSAT 8" in sat.name][0]
     landsat9 = [sat for sat in satFile if "LANDSAT 9" in sat.name][0]
-    satellites.append(landsat8)
-    satellites.append(landsat9)
-    return True
+    return [landsat8, landsat9]
 
 
 def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
     # Holds all the dates
     results = defaultdict(list)
 
-    print(enumerate(["joe", "mama"]))
     for sat in satellites:
         location = Topos(latitude_degrees=lat, longitude_degrees=lon)
 
@@ -46,49 +47,54 @@ def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
     return results
 
 
-curdir = os.path.dirname(os.path.abspath(__file__))
-filename = os.path.join(curdir, "data/tle.txt")
-load_sat_data(filename)
+SERVICE_URL = "https://m2m.cr.usgs.gov/api/api/json/development/"
 
-lat = 42.18856439825814
-lon = -82.82869985045305
 
-# Load timescale
-ts = load.timescale()
-# start_time = ts.now()
-# end_time = ts.utc(ts.now().utc_datetime() + timedelta(days=2))
-start_time = ts.utc(ts.now().utc_datetime() - timedelta(days=35))
-end_time = ts.now()
+if __name__ == "__main__":
+    curdir = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(curdir, "data/tle.txt")
+    satellites = load_sat_data(filename)
 
-print(predict_passover(lat, lon, start_time, end_time))
+    # Define the latitude and longitude
+    lat = 42.59113799085078
+    lon = -83.19858770096863
 
-# Define your EarthExplorer credentials
-username = "spaceapps43"
-password = "EdBB4#XDQcz@Kr"
+    # Define your EarthExplorer credentials
+    username = "spaceapps43"
+    password = "EdBB4#XDQcz@Kr"
 
-# Initialize the EarthExplorer instance
-api = API(username, password)
+    # Load timescale
 
-# Define the latitude and longitude
-lat = 42.59113799085078
-lon = -83.19858770096863
+    ts = load.timescale()
+    # start_time = ts.now()
+    # end_time = ts.utc(ts.now().utc_datetime() + timedelta(days=2))
+    start_time = ts.utc(ts.now().utc_datetime() - timedelta(days=35))
+    end_time = ts.now()
 
-scenes = api.search(
-    dataset="landsat_ot_c2_l2",
-    latitude=lat,
-    longitude=lon,
-    start_date="2024-09-01",
-    end_date="2024-10-18",
-    max_cloud_cover=20,
-)
+    print(predict_passover(lat, lon, start_time, end_time))
 
-print(f"{len(scenes)} found")
+    api = API(username, password)
 
-for scene in scenes:
-    print(scene['acquisition_date'].strftime('%Y-%m-%d'))
-    # Write scene footprints to disk
-    fname = f"{scene['display_id']}.geojson"
-    print(scene)
-    with open(fname, "w") as f:
-        json.dump(scene['spatial_coverage'].__geo_interface__, f)
+    scenes = api.search(
+        dataset="landsat_ot_c2_l2",
+        latitude=lat,
+        longitude=lon,
+        start_date="2024-09-05",
+        end_date="2024-09-06",
+        max_cloud_cover=20,
+    )
 
+    print(f"{len(scenes)} found")
+
+    for scene in scenes:
+        print(scene["acquisition_date"].strftime("%Y-%m-%d"))
+        # Write scene footprints to disk
+        fname = f"{scene['display_id']}.geojson"
+        print(scene)
+        # with open(fname, "w") as f:
+        #     json.dump(scene["spatial_coverage"].__geo_interface__, f)
+
+    # Initialize the EarthExplorer instance
+    ee = EarthExplorer(username, password)
+    # Download a specific scene by scene's entity_id
+    ee.download("LC90200302024249LGN00", "./scene_out", dataset="landsat_ot_c2_l2")
