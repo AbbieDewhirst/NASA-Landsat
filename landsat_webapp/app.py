@@ -18,6 +18,7 @@ from flask_sqlalchemy import SQLAlchemy
 from skyfield.api import load
 
 from landsat_parser.main import (
+    get_recent_scene_metadata,
     get_scene_metadata,
     predict_passover,
     get_is_cached_download,
@@ -144,6 +145,13 @@ def get_metadata():
     results = get_scene_metadata(lat, lon, start_date, end_date, cloud_coverage)
     return jsonify(results)
 
+@app.get("/recent-metadata")
+def get_recent_metadata():
+    lat = float(request.args.get("lat", 0))
+    lon = float(request.args.get("lon", 0))
+
+    results = get_recent_scene_metadata(lat, lon)
+    return jsonify(results)
 
 # Function to be scheduled
 def scheduled_task(message, email):

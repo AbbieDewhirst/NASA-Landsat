@@ -1,7 +1,7 @@
 import os
 from typing import DefaultDict, List
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import tarfile
 
 from shapely.geometry import Polygon
@@ -48,8 +48,40 @@ def predict_passover(lat: float, lon: float, start_time: Time, end_time: Time):
     return dict(results)
 
 
+def get_recent_scene_metadata(lat: float, lon: float):
+    username = "spaceapps43"
+    password = "EdBB4#XDQcz@Kr"
+
+    api = API(username, password)
+
+    scenes = api.search(
+        dataset="landsat_ot_c2_l2", latitude=lat, longitude=lon, max_results=1
+    )
+    if not scenes:
+        return None
+
+    scene = scenes[0]
+    bounds: Polygon = scene["spatial_coverage"]
+    return {
+        "spatial_coverage": list(bounds.exterior.coords),
+        "acquisition_date": scene["start_time"].isoformat(),
+        "cloud_cover": scene["cloud_cover"],
+        "wrs_path": scene["wrs_path"],
+        "wrs_row": scene["wrs_path"],
+        "land_cloud_cover": scene["land_cloud_cover"],
+        "scene_cloud_cover": scene["scene_cloud_cover"],
+        "entity_id": scene["entity_id"],
+        "display_id": scene["display_id"],
+        "satellite": scene["satellite"],
+    }
+
+
 def get_scene_metadata(
-    lat: float, lon: float, start_date: str, end_date: str, cloud_coverage: float = 100
+    lat: float,
+    lon: float,
+    start_date: str,
+    end_date: str,
+    cloud_coverage: float = 100,
 ):
     username = "spaceapps43"
     password = "EdBB4#XDQcz@Kr"
