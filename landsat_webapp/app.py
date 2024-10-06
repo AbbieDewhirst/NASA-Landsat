@@ -126,6 +126,11 @@ def get_metadata():
     lon = float(request.args.get("lon", 0))
     start_date = request.args.get("start_date", datetime.now().strftime("%Y-%m-%d"))
     end_date = request.args.get("end_date", datetime.now().strftime("%Y-%m-%d"))
+
+    start_date = (
+        datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=1)
+    ).strftime("%Y-%m-%d")
+
     cloud_coverage = int(request.args.get("cloud_coverage", 100))
 
     results = get_scene_metadata(lat, lon, start_date, end_date, cloud_coverage)
