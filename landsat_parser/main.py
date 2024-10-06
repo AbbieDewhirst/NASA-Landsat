@@ -56,8 +56,8 @@ if __name__ == "__main__":
     satellites = load_sat_data(filename)
 
     # Define the latitude and longitude
-    lat = 42.18856439825814
-    lon = -82.82869985045305
+    lat = 42.59113799085078
+    lon = -83.19858770096863
 
     # Define your EarthExplorer credentials
     username = "spaceapps43"
@@ -79,8 +79,8 @@ if __name__ == "__main__":
         dataset="landsat_ot_c2_l2",
         latitude=lat,
         longitude=lon,
-        start_date="2024-09-01",
-        end_date="2024-10-18",
+        start_date="2024-09-05",
+        end_date="2024-09-06",
         max_cloud_cover=20,
     )
 
@@ -97,4 +97,4 @@ if __name__ == "__main__":
     # Initialize the EarthExplorer instance
     ee = EarthExplorer(username, password)
     # Download a specific scene by scene's entity_id
-    ee.download("LC90200312024249LGN00", "./scene_out")
+    ee.download("LC90200302024249LGN00", "./scene_out", dataset="landsat_ot_c2_l2")
