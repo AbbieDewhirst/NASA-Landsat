@@ -1,3 +1,141 @@
-.center {
-    text-align: center;
+/* style.css */
+
+/* General Styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+/* Navbar Styling */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+}
+
+/* Map Container Styling */
+#map {
+    position: absolute;
+    top: 56px; /* Adjust according to navbar height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+/* Drawer Toggle Button */
+#drawer-toggle {
+    position: fixed;
+    top: 66px; /* Slightly below navbar */
+    left: 10px;
+    z-index: 1040; /* Above all elements */
+    background-color: var(--bs-body-bg);
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    color: var(--bs-body-color);
+}
+
+/* Cloud Slider Container Styling */
+#slider-container {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    z-index: 1000; /* Above map */
+    color: #fff;
+    border-radius: 5px;
+}
+
+/* Slider Styling */
+#slider-container label {
+    margin-bottom: 5px;
+    display: block;
+}
+
+#slider-container input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+    -webkit-appearance: none;
+    background: #007bff;
+    height: 4px;
+    outline: none;
+    opacity: 0.8;
+    border-radius: 5px;
+}
+
+#slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#slider-container input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+#slider-container span {
+    margin-left: 5px;
+}
+
+/* Input Styling */
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Button Styling */
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Popup Styling to Match Bootstrap Dark Theme */
+.bootstrap-dark-popup .mapboxgl-popup-content {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.bootstrap-dark-popup .mapboxgl-popup-tip {
+    border-top-color: var(--bs-body-bg);
+}
+
+/* Optional Popup Content Styling */
+.bootstrap-dark-popup .mapboxgl-popup-content h3 {
+    margin-top: 0;
+    color: var(--bs-heading-color, #fff);
+}
+
+.bootstrap-dark-popup .mapboxgl-popup-content p {
+    margin-bottom: 0;
 }

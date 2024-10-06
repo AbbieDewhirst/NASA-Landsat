@@ -1,0 +1,24 @@
+<!-- drawer.html -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasDrawer" aria-labelledby="offcanvasDrawerLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasDrawerLabel">Menu</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <!-- Marker Form -->
+        <div id="marker-form">
+            <h3>Add a Marker</h3>
+            <label for="lng">Longitude:</label>
+            <input type="text" id="lng" placeholder="Enter longitude" class="form-control mb-2">
+            <label for="lat">Latitude:</label>
+            <input type="text" id="lat" placeholder="Enter latitude" class="form-control mb-2">
+            <button onclick="addMarkerFromInput()" class="btn btn-primary">Add Marker</button>
+        </div>
+
+        <!-- Export Container -->
+        <div id="export-container" class="mt-4">
+            <h3>Export Data</h3>
+            <button onclick="exportToCSV()" class="btn btn-secondary">Export to CSV</button>
+        </div>
+    </div>
+</div>
