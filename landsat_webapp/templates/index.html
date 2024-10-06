@@ -75,11 +75,13 @@
                 const landsat8Time = formatDateTime(data["LANDSAT 8"]);
                 const landsat9Time = formatDateTime(data["LANDSAT 9"]);
 
-                // Prepare the popup content with a "More Info" button
+                // Prepare the popup content with centered "Coordinates" and "More Info" button
                 const popupContent = `
-                    <h6 class="mb-0">Coordinates:</h6>
-                    <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <button id="more-info-btn" class="btn btn-link p-0">Predictions</button>
+                    <div class="text-center">
+                        <h6 class="mb-2">Coordinates</h6>
+                        <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                        <button id="more-info-btn" class="btn btn-link">More Info Here</button>
+                    </div>
                 `;
 
                 // Set the popup with the prediction data
@@ -105,9 +107,11 @@
                 console.error('Error fetching prediction data:', error);
                 // Fallback content if there's an error
                 const popupContent = `
-                    <h6 class="mb-0">Coordinates:</h6>
-                    <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
-                    <p>Error fetching prediction data.</p>
+                    <div class="text-center">
+                        <h6 class="mb-2">Coordinates</h6>
+                        <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
+                        <p>Error fetching prediction data.</p>
+                    </div>
                 `;
                 const popup = new mapboxgl.Popup({ className: 'bootstrap-dark-popup' })
                     .setHTML(popupContent);
@@ -162,25 +166,6 @@
     offcanvasDrawer.addEventListener('hidden.bs.offcanvas', () => {
         map.resize();
     });
-
-    function openInfoDrawer(data) {
-        // Prepare the content for the drawer
-        const drawerContent = `
-            <h6>Coordinates:</h6>
-            <p>Longitude: ${data.lng}<br>Latitude: ${data.lat}</p>
-            <h6>Predictions:</h6>
-            <p>LANDSAT 8: ${data.landsat8Time}</p>
-            <p>LANDSAT 9: ${data.landsat9Time}</p>
-        `;
-
-        // Set the content of the drawer
-        document.getElementById('infoDrawerContent').innerHTML = drawerContent;
-
-        // Show the drawer
-        const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
-        infoDrawer.show();
-    }
-
     // Get references to the navbar collapse element and drawer toggle button
     const navbarCollapse = document.getElementById('navbarSupportedContent');
     const drawerToggleButton = document.getElementById('drawer-toggle');
