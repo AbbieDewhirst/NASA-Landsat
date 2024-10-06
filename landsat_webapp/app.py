@@ -17,7 +17,6 @@ from landsat_webapp.mailer import send_email
 from skyfield.api import load
 
 from landsat_parser.main import predict_passover
-
 from landsat_parser.main import get_scene_metadata
 
 load_dotenv()

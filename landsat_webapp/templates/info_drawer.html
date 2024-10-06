@@ -26,7 +26,7 @@
             </div>
 
             <hr>
-            <!-- Section 2: Passover Predictions -->
+            <!-- Section 2: Passover Predictions and Cloud Coverage -->
             <div class="drawer-section" id="predictions-section">
                 <h5>Passover Predictions of Landsat</h5>
                 <div class="mb-3">
@@ -35,6 +35,33 @@
                 </div>
                 <button id="fetch-predictions-btn" class="btn btn-primary mb-3">Fetch Predictions</button>
                 <div id="predictions-content"></div>
+
+                <hr>
+                <h5>Cloud Coverage</h5>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="enable-cloud-coverage">
+                    <label class="form-check-label" for="enable-cloud-coverage">Enable Cloud Coverage</label>
+                </div>
+
+                <!-- Collapsible Cloud Coverage Section -->
+                <div id="cloud-coverage-section" class="collapse">
+                    <div class="mb-3">
+                        <label for="slider" class="form-label">Cloud Coverage</label>
+                        <input type="range" id="slider" class="form-range" min="0" max="100" value="50">
+                        <span id="slider-value">50%</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="start-date" class="form-label">From:</label>
+                        <input type="date" id="start-date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="end-date" class="form-label">To:</label>
+                        <input type="date" id="end-date" class="form-control">
+                    </div>
+                    <button id="fetch-metadata-btn" class="btn btn-primary mb-3">Fetch Metadata</button>
+                    <div id="metadata-content"></div>
+                </div>
             </div>
 
             <!-- Section 3: Placeholder -->
@@ -48,15 +75,68 @@
         // Set the content of the drawer
         document.getElementById('infoDrawerContent').innerHTML = drawerContent;
 
+        // Initialize the date inputs
+        document.getElementById('start-date').value = getOneMonthEarlierDateString();
+        document.getElementById('end-date').value = getCurrentDateString();
+        document.getElementById('start-date').max = getCurrentDateString();
+        document.getElementById('end-date').max = getCurrentDateString();
+
         // Show the drawer
         const infoDrawer = new bootstrap.Offcanvas(document.getElementById('infoDrawer'));
         infoDrawer.show();
 
-        // Attach event listener to the "Fetch Predictions" button
-        const fetchButton = document.getElementById('fetch-predictions-btn');
-        fetchButton.addEventListener('click', () => {
-            fetchPredictions();
+        // Attach event listeners
+        attachEventListeners();
+    }
+
+    function attachEventListeners() {
+        // Enable or disable the collapse for cloud coverage section based on checkbox
+        const enableCloudCoverage = document.getElementById('enable-cloud-coverage');
+        enableCloudCoverage.addEventListener('change', (event) => {
+            const isEnabled = event.target.checked;
+            const cloudCoverageSection = document.getElementById('cloud-coverage-section');
+
+            if (isEnabled) {
+                // Show the cloud coverage section
+                new bootstrap.Collapse(cloudCoverageSection, {
+                    show: true
+                });
+            } else {
+                // Hide the cloud coverage section
+                new bootstrap.Collapse(cloudCoverageSection, {
+                    hide: true
+                });
+            }
         });
+
+        // Update slider value display
+        const slider = document.getElementById('slider');
+        const sliderValue = document.getElementById('slider-value');
+        slider.addEventListener('input', (event) => {
+            sliderValue.textContent = `${event.target.value}%`;
+        });
+
+        // Handle date inputs
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+
+        // Ensure "To" date does not exceed today and "From" date does not exceed "To" date
+        endDateInput.addEventListener('input', () => {
+            startDateInput.max = endDateInput.value;
+        });
+
+        // Ensure "From" date does not exceed "To" date
+        startDateInput.addEventListener('input', () => {
+            endDateInput.min = startDateInput.value;
+        });
+
+        // Fetch predictions
+        const fetchButton = document.getElementById('fetch-predictions-btn');
+        fetchButton.addEventListener('click', fetchPredictions);
+
+        // Fetch metadata
+        const fetchMetadataButton = document.getElementById('fetch-metadata-btn');
+        fetchMetadataButton.addEventListener('click', fetchMetadata);
     }
 
     function getCurrentDateString() {
@@ -70,10 +150,15 @@
         return today.toISOString().split('T')[0];
     }
 
+    function getOneMonthEarlierDateString() {
+        const today = new Date();
+        today.setMonth(today.getMonth() - 1);
+        return today.toISOString().split('T')[0];
+    }
+
     let fetchingInterval;
 
-    function startFetchingAnimation() {
-        const predictionsContent = document.getElementById('predictions-content');
+    function startFetchingAnimation(contentElement) {
         let dots = '';
         fetchingInterval = setInterval(() => {
             if (dots.length < 3) {
@@ -81,7 +166,7 @@
             } else {
                 dots = '';
             }
-            predictionsContent.innerHTML = `<p>Fetching${dots}</p>`;
+            contentElement.innerHTML = `<p>Fetching${dots}</p>`;
         }, 500); // Update every 500 milliseconds
     }
 
@@ -109,7 +194,8 @@
         const { lng, lat } = window.drawerData;
 
         // Start the fetching animation
-        startFetchingAnimation();
+        const predictionsContent = document.getElementById('predictions-content');
+        startFetchingAnimation(predictionsContent);
 
         // Call the predict endpoint
         fetch(`/predict?lat=${lat}&lon=${lng}&days=${daysAhead}`)
@@ -125,8 +211,35 @@
                 stopFetchingAnimation();
 
                 console.error('Error fetching prediction data:', error);
-                const predictionsContent = document.getElementById('predictions-content');
                 predictionsContent.innerHTML = '<p>Error fetching prediction data.</p>';
+            });
+    }
+
+    function fetchMetadata() {
+        const { lng, lat } = window.drawerData;
+        const cloudCoverage = document.getElementById('slider').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        // Start the fetching animation
+        const metadataContent = document.getElementById('metadata-content');
+        startFetchingAnimation(metadataContent);
+
+        // Call the metadata endpoint
+        fetch(`/metadata?lat=${lat}&lon=${lng}&cloud_coverage=${cloudCoverage}&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(metadata => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                displayMetadata(metadata);
+            })
+            .catch(error => {
+                // Stop the fetching animation
+                stopFetchingAnimation();
+
+                console.error('Error fetching metadata:', error);
+                metadataContent.innerHTML = '<p>Error fetching metadata.</p>';
             });
     }
 
@@ -136,6 +249,7 @@
             predictionsContent.innerHTML = '<p>No predictions available for the selected date.</p>';
             return;
         }
+
 
 
         let content = `
@@ -201,6 +315,21 @@
             .catch(error => {
                 alert('Error: ' + error);
             });
+    }
+
+    function displayMetadata(metadata) {
+        const metadataContent = document.getElementById('metadata-content');
+        if (!metadata) {
+            metadataContent.innerHTML = '<p>No metadata available for the selected criteria.</p>';
+            return;
+        }
+
+        let content = '<h6>Metadata:</h6>';
+        for (const key in metadata) {
+            content += `<p><strong>${key}:</strong> ${metadata[key]}</p>`;
+        }
+
+        metadataContent.innerHTML = content;
     }
 
     function formatDateTime(utcString) {
