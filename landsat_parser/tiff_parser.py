@@ -22,8 +22,8 @@ def parse_tiff_pixel(display_id: str, lat: float, lon: float):
     )
 
     bands_data = []
-    rgb_data = [[] for i in range(9)]
-    maxes = [0, 0, 0]
+    # rgb_data = [[] for i in range(9)]
+    # maxes = [0, 0, 0]
 
     for band in range(1, 8):
         formated_filename = filename.format(band)
