@@ -104,61 +104,36 @@ def login_post():
     return render_template("register.html")
 
 
-from flask import jsonify
-from collections import defaultdict
-from datetime import timedelta
-from skyfield.api import Topos, load
-
-
 @app.get("/predict")
 def predict_passover_endpoint():
-    # Get lat and lon from the request
+    # Get lat, lon, and days parameters from the request
     lat = float(request.args.get('lat', 0))
     lon = float(request.args.get('lon', 0))
+    days = int(request.args.get('days', 2))  # Default to 2 days if not provided
 
     # Load timescale
     ts = load.timescale()
-
-    # Set the initial search range (30 days)
-    days_increment = 30
     start_time = ts.now()
-    end_time = ts.utc(ts.now().utc_datetime() + timedelta(days=days_increment))
+    end_time = ts.utc(ts.now().utc_datetime() + timedelta(days=days))  # Check for the provided number of days
 
-    # Store the first occurrence of passovers for each satellite
-    first_occurrence = {"LANDSAT 8": None, "LANDSAT 9": None}
+    results = defaultdict(list)
 
-    # Keep querying in 30-day increments until both LANDSAT 8 and LANDSAT 9 have results
-    while not (first_occurrence["LANDSAT 8"] and first_occurrence["LANDSAT 9"]):
-        results = defaultdict(list)
+    for sat in satellites:
+        location = Topos(latitude_degrees=lat, longitude_degrees=lon)
 
-        for sat in satellites:
-            location = Topos(latitude_degrees=lat, longitude_degrees=lon)
+        # Predict passes over the location
+        t0, events = sat.find_events(
+            location, start_time, end_time, altitude_degrees=80
+        )
 
-            # Predict passes over the location
-            t0, events = sat.find_events(
-                location, start_time, end_time, altitude_degrees=80
-            )
+        # Record the passover details
+        for ti, event in zip(t0, events):
+            event_time = ti.utc_iso()  # ti is a Time object, we call utc_iso() on it
+            event_name = ["rise", "culmination", "set"][event]
+            if event == 0:
+                results[sat.name].append(event_time)
 
-            # Record the passover details
-            for ti, event in zip(t0, events):
-                event_time = ti.utc_iso()  # ti is a Time object, we call utc_iso() on it
-                if event == 0:  # We're only interested in the 'rise' event
-                    results[sat.name].append(event_time)
-
-        # Check for the first occurrence of both satellites
-        if not first_occurrence["LANDSAT 8"] and results["LANDSAT 8"]:
-            first_occurrence["LANDSAT 8"] = results["LANDSAT 8"][0]
-
-        if not first_occurrence["LANDSAT 9"] and results["LANDSAT 9"]:
-            first_occurrence["LANDSAT 9"] = results["LANDSAT 9"][0]
-
-        # If one of the satellites is missing, extend the time window
-        if not (first_occurrence["LANDSAT 8"] and first_occurrence["LANDSAT 9"]):
-            start_time = end_time  # Move the start time forward
-            end_time = ts.utc(end_time.utc_datetime() + timedelta(days=days_increment))  # Extend the end time
-
-    # Return the first occurrence of passovers for both satellites
-    return jsonify(first_occurrence)
+    return jsonify(results)
 
 
 if __name__ == "__main__":
