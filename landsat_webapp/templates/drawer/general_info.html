@@ -53,7 +53,7 @@
         const metadataContent = `
             <hr>
             <h5>Recent Scene Metadata</h5>
-            <p>Acquisition Date: ${metadata.acquisition_date}</p>
+            <p>Acquisition Date: ${new Date(metadata.acquisition_date).toLocaleString('en-CA')}</p>
             <p>Cloud Cover: ${metadata.cloud_cover}%</p>
             <p>Display ID: ${metadata.display_id}</p>
             <p>Entity ID: ${metadata.entity_id}</p>
