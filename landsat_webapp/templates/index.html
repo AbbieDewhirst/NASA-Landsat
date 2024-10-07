@@ -78,8 +78,75 @@
                 openInfoDrawer({ lng, lat });
             } else if (event.target && event.target.id === 'request-download-btn') {
                 // Logic to handle the scene download
+                checkSceneDownload();
+            }
+        });
+    }
+
+    function checkSceneDownload() {
+        if (!currentDisplayId) {
+            console.error('No display ID available for download.');
+            return;
+        }
+        console.log('checking for download: ' + currentDisplayId);
+
+        // Use URLSearchParams to append the display_id parameter correctly
+        const url = new URL('/download', window.location.origin);
+        url.searchParams.append('display_id', currentDisplayId);
+
+        fetch(url, {
+            method: 'GET'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to check download.');
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.exists) {
+                alert('Data already exists, no need to download.');
+            } else {
+                isSceneDownloading();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking download:', error);
+            alert('Error checking download.');
+        });
+    }
+
+    function isSceneDownloading() {
+        if (!currentDisplayId) {
+            console.error('No display ID available for download.');
+            return;
+        }
+        console.log('checking for download status: ' + currentDisplayId);
+
+        // Use URLSearchParams to append the display_id parameter correctly
+        const url = new URL('/poll-download', window.location.origin);
+        url.searchParams.append('display_id', currentDisplayId);
+
+        fetch(url, {
+            method: 'GET'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to check download status.');
+            }
+            return response.json();
+        })
+        .then(result => {
+            console.log(result)
+            if (result.is_downloading) {
+                alert('Data is downloading, this can take up to 10 min.');
+            } else {
                 startSceneDownload();
             }
+        })
+        .catch(error => {
+            console.error('Error checking download status:', error);
+            alert('Error checking download status.');
         });
     }
 
@@ -88,6 +155,8 @@
             console.error('No display ID available for download.');
             return;
         }
+
+        console.log('Starting Downloads: ' + currentDisplayId);
 
         fetch(`/download?display_id=${currentDisplayId}`, {
             method: 'POST'
@@ -100,7 +169,7 @@
         })
         .then(result => {
             if (result.success) {
-                alert('Download started successfully.');
+                alert('Download started successfully. This can take up to 10 min');
             } else {
                 alert('Failed to start download.');
             }

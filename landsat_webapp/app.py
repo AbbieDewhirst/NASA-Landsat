@@ -215,13 +215,15 @@ def schedule():
 @app.get("/download")
 # @login_required
 def download():
-    display_id = request.form.get("display_id")
+    display_id = request.args.get("display_id")
+    print("Checking for download", end=" ")
     if display_id:
+        print(display_id)
         is_cached = get_is_cached_download(display_id)
         return jsonify({"exists": is_cached}), HTTPStatus.OK
 
+    print("FAILED No display_id provided")
     return jsonify({"error": "No display_id provided"}), HTTPStatus.BAD_REQUEST
-
 
 @app.post("/download")
 # @login_required
