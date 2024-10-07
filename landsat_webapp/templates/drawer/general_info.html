@@ -25,6 +25,12 @@
                 displaySceneMetadata(metadata);
                 // Draw bounding box on the map
                 drawBoundingBox(metadata.spatial_coverage);
+                
+                // Enable the request download button after metadata is fetched
+                const downloadButton = document.querySelector('#request-download-btn');
+                if (downloadButton) {
+                    downloadButton.disabled = false;
+                }
             })
             .catch(error => {
                 console.error('Error fetching recent scene metadata:', error);
