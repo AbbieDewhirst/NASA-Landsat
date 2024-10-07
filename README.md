@@ -1,23 +1,15 @@
-# NASA SpaceApps Challenge
+# NASA SpaceApps Challenge - `Satelleyes`
 
-## Poetry
-- `pip install poetry`
-- `poetry install`
-- `poetry run python landsat_webapp/app.py`
+Created by Abbie Dewhirst, Mathew Pellarin, Jeremie Bornais, Zain Raza, Jagraj Aulakh, and Wahid Bawa
 
+Satelleyes aims to provide users with a web-based application that allows them to identify when Landsat satellites will pass over a specific location. Users can select a point on the map, either by marking a spot or entering precise longitude and latitude coordinates. The application then provides notifications for upcoming satellite flyovers, making it easy for users to plan ground-based observations in sync with satellite data collection, which can be downloaded in JSON format. By facilitating the comparison of ground-based measurements with Landsat satellite data, our projects addresses the challenge of connecting satellite data with real-world applications. This tool fosters scientific exploration, encourages interdisciplinary learning, and empowers users with valuable spatial information. It is important because it helps researchers, educators and enthusiasts access and utilize remote sensing data for environmental monitoring, resource management, and educational purposes, enhancing their understanding of Earth's surface changes.
 
-## Dataset download
-We're hosting the dataset on google drive. Download it and extract it in `data/`:
+## Resources
 
-https://drive.google.com/file/d/1FfwMASyE7loSJNDDUXIrMpFD0TXd6dPZ/view?usp=sharing
-
-or
-
-```bash
-cd data
-wget "https://owncloud.jagrajaulakh.com/s/g9HfAdH1FIwuxTj/download" -O "LC08_L1GT_114213_20241002_20241002_02_RT.tar"
-tar -xvf LC08_L1GT_114213_20241002_20241002_02_RT.tar 
-```
+- [Slides](https://abbiedewhirst.github.io/NASA-Landsat/satelleyes_slides.pdf)
+- [Live Demo](https://nasa.matp101.com/)
+- [Project Submission Page](https://www.spaceappschallenge.org/nasa-space-apps-2024/find-a-team/reesaholics/?tab=project)
+- [Project Wiki](https://github.com/AbbieDewhirst/NASA-Landsat/wiki)
 
 ## Requirements
 - [X] 1. Allow users to define the target location. Will they specify the place name, latitude and longitude, or select a location on a map?
@@ -32,13 +24,3 @@ tar -xvf LC08_L1GT_114213_20241002_20241002_02_RT.tar
 - [x] 10. Display a graph of the Landsat SR data along the spectrum (i.e., the spectral signature) in addition to scene metadata.
 - [X] 11. Allow users to download or share data in a useful format (e.g., csv).
 
-
-## Extra Info
-- Landsatxplore: Given lat/lon, we're getting:
-    - acquisition_date
-    - cloud coverage
-    - display_id
-    - landsat_product_id
-    - wrs_path, wrs_row
-    - spatial_coverage (bounding box)
-    - AND NOW L1 DATA!!
