@@ -224,7 +224,7 @@ def download():
 @app.post("/download")
 # @login_required
 def initialize_download():
-    display_id = request.form.get("display_id")
+    display_id = request.args.get("display_id")
     if display_id:
         success = start_download(display_id)
         return jsonify(

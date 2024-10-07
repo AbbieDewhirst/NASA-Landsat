@@ -53,7 +53,7 @@
                 <h6 class="mb-2">Coordinates</h6>
                 <p>Longitude: ${lng}<br>Latitude: ${lat}</p>
                 <button id="more-info-btn" class="btn btn-primary mb-2">More Info Here</button>
-                <button id="request-download-btn" class="btn btn-danger">Request scene download</button>
+                <button id="request-download-btn" class="btn btn-danger" disabled>Request scene download</button>
             </div>
         `;
 
@@ -67,6 +67,7 @@
         // Open the popup
         popup.addTo(map);
 
+        // Enable the download button if metadata is fetched
         updateGeneralInfo(lng, lat);
         
         // Attach the event listener after the popup is added to the map
@@ -76,12 +77,39 @@
                 // Open the right-side drawer and display data
                 openInfoDrawer({ lng, lat });
             } else if (event.target && event.target.id === 'request-download-btn') {
-                // Open the right-side drawer and display data
-                console.log('click');
+                // Logic to handle the scene download
+                startSceneDownload();
             }
-       });
+        });
     }
-    
+
+    function startSceneDownload() {
+        if (!currentDisplayId) {
+            console.error('No display ID available for download.');
+            return;
+        }
+
+        fetch(`/download?display_id=${currentDisplayId}`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to start download.');
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                alert('Download started successfully.');
+            } else {
+                alert('Failed to start download.');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting download:', error);
+            alert('Error starting download.');
+        });
+    }
     // Add marker from input
     function addMarkerFromInput() {
         const lng = parseFloat(document.getElementById('lng').value);
