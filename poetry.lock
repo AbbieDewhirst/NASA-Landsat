@@ -350,19 +350,6 @@ flask = ">=2.2.5"
 sqlalchemy = ">=2.0.16"
 
 [[package]]
-name = "gdal"
-version = "3.9.2"
-description = "GDAL: Geospatial Data Abstraction Library"
-optional = false
-python-versions = ">=3.8.0"
-files = [
-    {file = "gdal-3.9.2.tar.gz", hash = "sha256:cf9c1add09ce152975c94d48a1a89dd300c292e0761fd3d22a8071a98852e129"},
-]
-
-[package.extras]
-numpy = ["numpy (>1.0.0)"]
-
-[[package]]
 name = "greenlet"
 version = "3.1.1"
 description = "Lightweight in-process concurrent programming"
@@ -1106,4 +1093,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a488334d5be4299e3ae3d3d8ebab04389a6b20bb4520561c5c74982b3ca6d4dc"
+content-hash = "8aa473657dffab4e1537b88444f954e2d60ff1dbb36003de3c680a1092d6aaa7"
