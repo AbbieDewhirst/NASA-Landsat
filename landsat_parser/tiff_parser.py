@@ -18,7 +18,7 @@ def parse_tiff_pixel(display_id: str, lat: float, lon: float):
     CUR_DIR = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(
         CUR_DIR,
-        f"../scene_out/{display_id}/{display_id}_SR_B{{}}.TIF",
+        f"scene_out/{display_id}/{display_id}_SR_B{{}}.TIF",
     )
 
     bands_data = []
