@@ -1,6 +1,7 @@
 import os
 import rasterio
 from rasterio.warp import transform
+import numpy as np
 
 
 def latlon_to_pixel(dataset, lat, lon):
@@ -22,8 +23,8 @@ def parse_tiff_pixel(display_id: str, lat: float, lon: float):
     )
 
     bands_data = []
-    # rgb_data = [[] for i in range(9)]
-    # maxes = [0, 0, 0]
+    rgb_data = [[] for _ in range(3)]
+    maxes = [1, 1, 1]
 
     for band in range(1, 8):
         formated_filename = filename.format(band)
@@ -31,16 +32,32 @@ def parse_tiff_pixel(display_id: str, lat: float, lon: float):
         with rasterio.open(formated_filename) as dataset:
             # Read the data value at the specific row and column
             row, col = latlon_to_pixel(dataset, lat, lon)
-            data_value = dataset.read(1)[row, col]
+            data = dataset.read(1)
+            data_value = data[row, col]
 
             print(f"Data value at ({lon}, {lat} -> {row}, {col}): {data_value}")
             bands_data.append(int(data_value))
-            # if 2<= band <= 4:
-            #     for i in range(3):
-            #         for j in range(3):
-            #             rgb_data[i*3+j].append(data_value)
+            if 2 <= band <= 4:
+                maxes[band - 2] = int(np.max(data))
+                rgb_data[band - 2] = [
+                    int(data[row - 1][col - 1]),
+                    int(data[row - 1][col]),
+                    int(data[row - 1][col + 1]),
+                    int(data[row][col - 1]),
+                    int(data[row][col]),
+                    int(data[row][col + 1]),
+                    int(data[row + 1][col - 1]),
+                    int(data[row + 1][col]),
+                    int(data[row + 1][col + 1]),
+                ]
+    rgb_values = []
 
-    return bands_data
+    for i in range(9):
+        c_list = []
+        for j in range(3):
+            c_list.append(int(rgb_data[j][i] / maxes[j] * 255))
+        rgb_values.append(c_list)
+    return [bands_data, rgb_values]
 
 
 if __name__ == "__main__":

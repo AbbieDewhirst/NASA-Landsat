@@ -146,6 +146,7 @@ def get_metadata():
     results = get_scene_metadata(lat, lon, start_date, end_date, cloud_coverage)
     return jsonify(results)
 
+
 @app.get("/recent-metadata")
 def get_recent_metadata():
     lat = float(request.args.get("lat", 0))
@@ -154,14 +155,15 @@ def get_recent_metadata():
     results = get_recent_scene_metadata(lat, lon)
     return jsonify(results)
 
+
 @app.get("/l1-data")
 def get_l1_data():
     display_id = request.args.get("display_id", "")
     lat = float(request.args.get("lat", 0))
     lon = float(request.args.get("lon", 0))
 
-    bands = parse_tiff_pixel(display_id, lat, lon)
-    return jsonify({"band_values": bands})
+    bands, rgb = parse_tiff_pixel(display_id, lat, lon)
+    return jsonify({"band_values": bands, "rgb_values": rgb})
 
 
 # Function to be scheduled
