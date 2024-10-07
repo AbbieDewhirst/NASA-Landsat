@@ -1,7 +1,17 @@
 # Use the official Python image with the specified version
 FROM python:3.12-slim
 
-# Set environment variables
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+        gdal-bin \
+        libgdal-dev \
+        python3-gdal \
+        build-essential
+
+# Set environment variables for GDAL
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
 ENV PYTHONUNBUFFERED=1
 
 # Set the working directory
