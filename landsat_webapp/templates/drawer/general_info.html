@@ -9,6 +9,8 @@
 <hr>
 
 <script>
+    let currentDisplayId = ''; // Global variable to store display_id
+
     function updateGeneralInfo(lng, lat) {
         document.querySelector('#general-info-content').innerHTML = `Longitude: ${lng}<br>Latitude: ${lat}`;
         
@@ -25,7 +27,10 @@
                 displaySceneMetadata(metadata);
                 // Draw bounding box on the map
                 drawBoundingBox(metadata.spatial_coverage);
-                
+
+                // Store the display_id in the global variable
+                currentDisplayId = metadata.display_id;
+
                 // Enable the request download button after metadata is fetched
                 const downloadButton = document.querySelector('#request-download-btn');
                 if (downloadButton) {

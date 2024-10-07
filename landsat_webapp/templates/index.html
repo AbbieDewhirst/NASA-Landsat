@@ -67,7 +67,7 @@
         // Open the popup
         popup.addTo(map);
 
-        //if not null enable the download button
+        // Enable the download button if metadata is fetched
         updateGeneralInfo(lng, lat);
         
         // Attach the event listener after the popup is added to the map
@@ -78,11 +78,38 @@
                 openInfoDrawer({ lng, lat });
             } else if (event.target && event.target.id === 'request-download-btn') {
                 // Logic to handle the scene download
-                console.log('Requesting scene download...');
+                startSceneDownload();
             }
         });
     }
 
+    function startSceneDownload() {
+        if (!currentDisplayId) {
+            console.error('No display ID available for download.');
+            return;
+        }
+
+        fetch(`/download?display_id=${currentDisplayId}`, {
+            method: 'POST'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to start download.');
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                alert('Download started successfully.');
+            } else {
+                alert('Failed to start download.');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting download:', error);
+            alert('Error starting download.');
+        });
+    }
     // Add marker from input
     function addMarkerFromInput() {
         const lng = parseFloat(document.getElementById('lng').value);
