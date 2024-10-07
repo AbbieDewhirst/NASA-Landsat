@@ -57,7 +57,7 @@ def parse_tiff_pixel(display_id: str, lat: float, lon: float):
         for j in range(3):
             c_list.append(int(rgb_data[j][i] / maxes[j] * 255))
         rgb_values.append(c_list)
-    return bands_data
+    return [bands_data, rgb_values]
 
 
 if __name__ == "__main__":
