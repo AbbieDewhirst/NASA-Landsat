@@ -69,41 +69,48 @@
         // Update the HTML content
         document.querySelector('#scene-metadata-content').innerHTML = metadataContent;
 
-        // L1 Data fake
-        let l1_data = {
-            "band_values": [
-                8433,
-                8707,
-                11609,
-                10743,
-                21019,
-                16590,
-                12864
-            ]
-        }
+        const url = `/l1-data?display_id=${metadata.display_id}&lat=${lat}&lon=${lng}`;
 
-        let labels = Array.from({length: l1_data.band_values.length}, (v, i) => i + 1);
-
-        const ctx = document.getElementById('myChart');
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Band Values',
-                    data: l1_data.band_values,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        // Make the fetch call
+        fetch(url)
+            .then(response => {
+                // Check if the response is okay (status code in the range 200-299)
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
                 }
-            }
-        });
+                // Parse the response as JSON
+                return response.json();
+            })
+            .then(data => {
+                // Handle the parsed JSON data
+                console.log(data);
+                let labels = Array.from({ length: data.band_values.length }, (v, i) => i + 1);
+
+                const ctx = document.getElementById('myChart');
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Band Value',
+                            data: data.band_values,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                // Handle any errors that occurred during the fetch
+                console.error('There has been a problem with your fetch operation:', error);
+            });
     }
 
     function drawBoundingBox(coordinates) {
