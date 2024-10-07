@@ -61,7 +61,7 @@
             <p>LANDSAT: ${metadata.satellite}</p>
             <p>Scene Cloud Cover: ${metadata.scene_cloud_cover}%</p>
             <p>WRS Path: ${metadata.wrs_path}, WRS Row: ${metadata.wrs_row}</p>
-            <div id="l1-loading" class="bg-primary rounded p-2"><strong>Fetching Data...</strong></div>
+            <div id="l1-loading" class="bg-primary rounded p-2"><strong id="fetching-data">Fetching Data...</strong></div>
             <div id="l1-loaded" class="hidden">
                 <div style="background-color: white;">
                     <canvas id="myChart"></canvas>
@@ -73,6 +73,32 @@
 
         // Update the HTML content
         document.querySelector('#scene-metadata-content').innerHTML = metadataContent;
+
+        if (!metadata.display_id) {
+            console.error('No display ID available for download.');
+            return;
+        }
+        console.log('checking for download: ' + metadata.display_id);
+
+        // Use URLSearchParams to append the display_id parameter correctly
+        const url1 = new URL('/download', window.location.origin);
+        url1.searchParams.append('display_id', metadata.display_id);
+
+        fetch(url1, {
+            method: 'GET'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to check download.');
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (!result.exists) {
+                document.querySelector('#fetching-data').textContent = 'Data not downloaded yet, please download data.';
+                return;
+            }
+        });
 
         const url = `/l1-data?display_id=${metadata.display_id}&lat=${lat}&lon=${lng}`;
 
