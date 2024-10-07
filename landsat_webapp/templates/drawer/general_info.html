@@ -11,7 +11,7 @@
 <script>
     function updateGeneralInfo(lng, lat) {
         document.querySelector('#general-info-content').innerHTML = `Longitude: ${lng}<br>Latitude: ${lat}`;
-        
+
         // Fetch recent scene metadata using the provided lat/lon
         fetch(`/recent-metadata?lat=${lat}&lon=${lng}`)
             .then(response => {
@@ -22,7 +22,7 @@
             })
             .then(metadata => {
                 // Display the metadata in the general info section
-                displaySceneMetadata(metadata);
+                displaySceneMetadata(metadata, lng, lat);
                 // Draw bounding box on the map
                 drawBoundingBox(metadata.spatial_coverage);
             })
@@ -32,7 +32,7 @@
             });
     }
 
-    function displaySceneMetadata(metadata) {
+    function displaySceneMetadata(metadata, lng, lat) {
         if (!metadata || Object.keys(metadata).length === 0) {
             document.querySelector('#scene-metadata-content').innerHTML = '<p>No recent scene metadata available.</p>';
             return;
@@ -50,10 +50,49 @@
             <p>LANDSAT: ${metadata.satellite}</p>
             <p>Scene Cloud Cover: ${metadata.scene_cloud_cover}%</p>
             <p>WRS Path: ${metadata.wrs_path}, WRS Row: ${metadata.wrs_row}</p>
+            <div style="background-color: white;">
+                <canvas id="myChart"></canvas>
+            </div>
         `;
 
         // Update the HTML content
         document.querySelector('#scene-metadata-content').innerHTML = metadataContent;
+
+        // L1 Data fake
+        let l1_data = {
+            "band_values": [
+                8433,
+                8707,
+                11609,
+                10743,
+                21019,
+                16590,
+                12864
+            ]
+        }
+
+        let labels = Array.from({length: l1_data.band_values.length}, (v, i) => i + 1);
+
+        const ctx = document.getElementById('myChart');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Band Values',
+                    data: l1_data.band_values,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
     }
 
     function drawBoundingBox(coordinates) {
